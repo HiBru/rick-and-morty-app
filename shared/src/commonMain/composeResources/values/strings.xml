@@ -1,0 +1,30 @@
+<resources>
+    <!--
+      Error messages, one per reachable DataError constant.
+
+      Each says what happened and, where the user can do something, what. None
+      of them name a cause the user cannot act on, and none blame the user for a
+      fault that is ours.
+
+      Apostrophes are NOT escaped here. Compose Resources is not aapt: its
+      Gradle plugin unescapes only \uXXXX, \n, \t and \\, and the runtime
+      returns the text verbatim — so a \' would ship a visible backslash to the
+      user. For the same reason, any future placeholder must be indexed
+      (%1$s, %1$d); a bare %s is emitted literally with no error.
+    -->
+    <string name="error_no_internet">No internet connection. Check your connection and try again.</string>
+    <string name="error_request_timeout">The request took too long. Try again.</string>
+    <string name="error_not_found">We couldn't find what you were looking for.</string>
+    <string name="error_too_many_requests">Too many requests. Wait a moment and try again.</string>
+    <string name="error_server">The server is having trouble. Try again later.</string>
+    <!-- Our bug, not theirs: the response arrived but did not match what we expected. -->
+    <string name="error_serialization">We couldn't read the server's response.</string>
+    <string name="error_disk_full">There's no space left on your device.</string>
+    <!--
+      Source-neutral on purpose: DataError.Local.UNKNOWN comes from reads
+      (getFavorite, and the local-first getCharacter behind the detail screen) as
+      well as writes, so it must not claim a save failed.
+    -->
+    <string name="error_local_unknown">Something went wrong on your device. Try again.</string>
+    <string name="error_unknown">Something went wrong. Try again.</string>
+</resources>

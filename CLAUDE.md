@@ -219,7 +219,11 @@ sealed interface UiText {
 
 In `core/ui/`. Note the variant is `StringResourceText` and `args` is a `List`. Rendered with `.asString()`.
 
-`.toUiText()` mappers live next to it, plus one dispatcher over the `Error` marker interface. Use `UiText` for anything resource-backed or localizable; plain `String` for values that are always dynamic (a raw id, a name straight from the API).
+There is a third variant, `Joined(parts, separator)`, which drops blank parts and their separators — that is how a row reads as "Alive · Human" when the API sent a blank `type`.
+
+`.toUiText()` mappers live next to it. The skill also prescribes a dispatcher over the `Error` marker interface; it is **deliberately deferred** until something returns `Result<T, Error>` — see the plan. Use `UiText` for anything resource-backed or localizable; plain `String` for values that are always dynamic (a raw id, a name straight from the API).
+
+**`strings.xml` does not follow Android escaping conventions** — Compose Resources is not aapt. It unescapes only `\uXXXX`, `\n`, `\t` and `\\`, so an Android-style `\'` ships a *visible backslash* to the user. It also substitutes only indexed placeholders (`%1$s`, `%1$d`); a bare `%s` is emitted literally with no error. Resource *text* can only be asserted in a test on iOS — on the JVM `getString` resolves through `Resources.getSystem()`, which an unmocked host test cannot provide.
 
 ### Koin
 
