@@ -14,6 +14,11 @@ import de.shinz.rickandmortyshowcase.features.shared.presentation.previews.Chara
  * assembler over a `CharacterListViewModelState` — so a preview cannot drift
  * from the screen when the assembler changes.
  *
+ * **No removal-dialog variant.** `AppConfirmDialog` renders into its own
+ * platform window, which never appears in a `@Preview` — the value would be
+ * visually identical to "loaded". The dialog's own look is previewed through
+ * `AppConfirmDialogContent`, and its wiring through the screen's UI tests.
+ *
  * Note that `pageLoad` has to be named explicitly for anything that is *not*
  * loading: its default is `Loading`, because on this screen "nothing has
  * happened yet" means "waiting for page 1".
@@ -60,14 +65,6 @@ internal class CharacterListScreenPreviewParameterProvider :
                 pageLoad = CharacterListPageLoad.Failed(DataError.Network.REQUEST_TIMEOUT),
             ),
         ),
-        assemble(
-            vmState = CharacterListViewModelState(
-                characters = characters,
-                pageLoad = CharacterListPageLoad.Idle,
-                pendingRemovalId = CharacterPreviewSamples.rick.id,
-            ),
-            favoriteIds = setOf(CharacterPreviewSamples.rick.id),
-        ),
     )
 
     override fun getDisplayName(index: Int): String = listOf(
@@ -76,6 +73,5 @@ internal class CharacterListScreenPreviewParameterProvider :
         "loading next page",
         "first load failed",
         "next page failed",
-        "remove dialog",
     )[index]
 }

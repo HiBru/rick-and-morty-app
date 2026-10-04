@@ -20,6 +20,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import de.shinz.rickandmortyshowcase.core.designsystem.theme.AppTheme
+import de.shinz.rickandmortyshowcase.features.characterdetail.presentation.CharacterDetailRoot
 import de.shinz.rickandmortyshowcase.features.characterlist.presentation.CharacterListRoot
 
 /**
@@ -48,14 +49,22 @@ fun AppNavHost(
             )
         }
         composable<CharacterDetailRoute> { entry ->
+            // The route is decoded **here**, where a NavBackStackEntry is in
+            // hand — the ViewModel takes a plain Int, because `toRoute` on a
+            // SavedStateHandle goes through an unmocked `android.os.Bundle` in
+            // host tests. See the ViewModel's KDoc.
             val route: CharacterDetailRoute = entry.toRoute()
-            PlaceholderScreen(
-                title = "Detail ${route.characterId}",
-                replacedBy = "Task 19",
+            CharacterDetailRoot(
+                characterId = route.characterId,
                 // Detail is outside the dashboard's Scaffold, so it gets no
                 // innerPadding — it has to take the window insets itself or its
                 // content runs under the status bar.
                 contentPadding = WindowInsets.safeDrawing.asPaddingValues(),
+                // `navigateUp`, and no once-guard — unlike the forward edge.
+                // With one entry left it takes the up-from-deep-link path
+                // instead of popping, so a double tap during the exit
+                // transition is a no-op rather than emptying the NavHost.
+                onNavigateBack = navController::navigateUp,
             )
         }
     }
