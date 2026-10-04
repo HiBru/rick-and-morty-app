@@ -35,8 +35,9 @@ fun DataError.toUiText(): UiText = UiText.StringResourceText(
         DataError.Network.UNKNOWN -> Res.string.error_unknown
 
         DataError.Local.DISK_FULL -> Res.string.error_disk_full
-        // Not a "couldn't save" message: Local.UNKNOWN also comes from reads —
-        // getFavorite, and the local-first getCharacter behind the detail screen.
+        // Not a "couldn't save" message: Local.UNKNOWN also reaches the UI from
+        // getFavorite. (It no longer arrives via getCharacter — the local-first
+        // repository swallows a storage failure and falls through to the API.)
         DataError.Local.UNKNOWN -> Res.string.error_local_unknown
     },
 )

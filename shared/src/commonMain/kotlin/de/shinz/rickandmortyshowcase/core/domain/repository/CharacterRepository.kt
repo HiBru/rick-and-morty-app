@@ -11,8 +11,12 @@ import de.shinz.rickandmortyshowcase.core.domain.model.Character
  *
  * It exists for exactly one read. The detail screen is handed a character id and
  * nothing else, so something has to decide where that character comes from:
- * the local row if it is favourited, the API otherwise. Because it spans both
- * sources its error type widens to plain [DataError].
+ * the local row if it is favourited, the API otherwise.
+ *
+ * The error type is the wide [DataError] because it spans both sources — but note
+ * that the implementation falls through to the API on a storage failure, so in
+ * practice only [DataError.Network] values are reachable here. The declaration
+ * stays wide so the next multi-source read does not have to widen it.
  */
 interface CharacterRepository {
 
