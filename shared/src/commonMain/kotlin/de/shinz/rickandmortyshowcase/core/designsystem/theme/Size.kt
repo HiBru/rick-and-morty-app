@@ -21,6 +21,11 @@ data class AppSize(
     val iconSmall: Dp = 18.dp,
     /** The character thumbnail in a list row. */
     val avatar: Dp = 64.dp,
+    /** The illustration on a full-screen empty or error state. Not [avatar] —
+     *  retuning the list thumbnail must not resize those screens. */
+    val iconLarge: Dp = 64.dp,
+    /** The indeterminate spinner. Material's own default, now owned here. */
+    val spinner: Dp = 40.dp,
     /** The status dot beside a character's status label. */
     val statusDot: Dp = 8.dp,
     /** Minimum tappable edge. Below this, a target fails accessibility. */

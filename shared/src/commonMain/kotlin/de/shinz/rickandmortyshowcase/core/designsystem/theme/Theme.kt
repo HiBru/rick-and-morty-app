@@ -1,7 +1,9 @@
 package de.shinz.rickandmortyshowcase.core.designsystem.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
@@ -33,6 +35,26 @@ private val SizeTokens = AppSize()
 private val BorderTokens = AppBorder()
 
 /**
+ * The Material 3 shape scale, built from [AppRadius].
+ *
+ * The same trap the ColorScheme documents: an unmapped slot is not a fallback,
+ * it is stock Material. Without this an `AlertDialog` renders at M3's
+ * `CornerExtraLarge` (28dp) while `AppRadius.md`'s own KDoc calls 12dp the
+ * dialog radius.
+ *
+ * Note it does **not** cover buttons: `ButtonDefaults.shape` reads a Material
+ * token directly rather than `MaterialTheme.shapes`, so a button that wants an
+ * app radius has to be passed one at the call site.
+ */
+private val ShapeTokens = Shapes(
+    extraSmall = RoundedCornerShape(RadiusTokens.sm),
+    small = RoundedCornerShape(RadiusTokens.sm),
+    medium = RoundedCornerShape(RadiusTokens.md),
+    large = RoundedCornerShape(RadiusTokens.md),
+    extraLarge = RoundedCornerShape(RadiusTokens.lg),
+)
+
+/**
  * Defaults to [ThemeMode.SYSTEM], and must keep doing so: `@PreviewLightDark`
  * renders both themes from one preview function by varying the preview's
  * `uiMode`, which only works if the theme follows the system when told nothing.
@@ -56,6 +78,7 @@ fun AppTheme(
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
             typography = appMaterialTypography,
+            shapes = ShapeTokens,
             content = content,
         )
     }

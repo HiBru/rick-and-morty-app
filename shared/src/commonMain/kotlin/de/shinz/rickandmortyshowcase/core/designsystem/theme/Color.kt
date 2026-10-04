@@ -112,9 +112,11 @@ val appDarkColors = AppColors(
    so they are mapped from the same raw values rather than left on the M3
    defaults, which would put stock purple in the bottom bar.
 
-   One accent, so primary, secondary and tertiary are the same teal. `error` is
-   the dead status red: the two never appear together, and a second red would be
-   drift.
+   One accent, so primary, secondary and tertiary are the same teal. `error`
+   reuses the dead-status red rather than introducing a second one. They *can*
+   share a screen — the remove-confirmation dialog tints its destructive action
+   while status dots sit behind the scrim — which is an argument for one red
+   rather than against it.
 
    Every slot the app's components actually read is mapped, because an unmapped
    one is not a fallback — it is stock M3 purple. The three that bite:

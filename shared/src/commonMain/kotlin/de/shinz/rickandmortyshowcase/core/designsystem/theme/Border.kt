@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 data class AppBorder(
     /** Card outlines and list dividers. Read it into a local before a draw lambda. */
     val hairline: Dp = 1.dp,
+    /** A stroke meant to be seen in its own right — the progress indicator's track. */
+    val strong: Dp = 4.dp,
 )
 
 val LocalAppBorder = staticCompositionLocalOf { AppBorder() }
