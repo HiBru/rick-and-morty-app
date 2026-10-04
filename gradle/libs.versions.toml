@@ -19,6 +19,8 @@ room = "2.8.4"
 sqlite = "2.7.0"
 ksp = "2.3.10"
 datastore = "1.2.1"
+# Named directly: DataStore's createWithPath takes an okio.Path.
+okio = "3.18.2"
 navigationCompose = "2.10.0-beta01"
 coil = "3.6.3"
 
@@ -73,6 +75,7 @@ androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.r
 
 # DataStore (preferences)
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 
 # Images
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }

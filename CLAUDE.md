@@ -87,7 +87,8 @@ core/
     format/            AppDateTimeManager + expect PlatformDateTimeFormatter
     ui/                UiText, ObserveAsEvents, toUiText() mappers
 di/
-    AppModule.kt       appModule (grouped by feature) + coreDataModule, coreDatabaseModule
+    AppModule.kt       appModule (grouped by feature) + coreDataModule,
+                       coreDatabaseModule, coreDataStoreModule
 features/
     characterlist/     domain/usecase + presentation
     characterdetail/
@@ -300,9 +301,7 @@ The skills leave these unanswered. Most now have a recorded answer in `docs/IMPL
 
 5. **`.dataOrNull()`** appears in a skill example but is not among the four defined `Result` helpers. Answered: deliberately **not** defined — the plan says why, and to unwrap with an exhaustive `when`.
 
-**Still genuinely open:**
-
-6. **DataStore has no conventions** in any skill — no key naming, no `Preferences`-vs-typed guidance.
+6. **DataStore has no conventions** in any skill — no key naming, no `Preferences`-vs-typed guidance. Answered in the plan: Preferences (not proto), one file, and the key treated as schema.
 
 Settled, and recorded here because the skills point the wrong way: the error-handling skill's `constructRoute` reads `BuildConfig.BASE_URL`, which does not exist in `commonMain` — this project uses a plain `const val BASE_URL` in `core/data/`, which is safe because the API is public and has no secret.
 

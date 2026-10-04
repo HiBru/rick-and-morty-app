@@ -16,7 +16,7 @@ suspend fun <T> safeLocalCall(block: suspend () -> T): Result<T, DataError.Local
 }
 
 /**
- * Best-effort recognition of a full disk.
+ * Best-effort recognition of a full disk, across both storage layers.
  *
  * Message matching is not a choice — `androidx.sqlite.SQLiteException` carries
  * **only** a message, with no result code exposed, so the text is the sole
@@ -28,7 +28,16 @@ suspend fun <T> safeLocalCall(block: suspend () -> T): Result<T, DataError.Local
 internal fun Throwable.asLocalError(): DataError.Local {
     val text = message?.lowercase()
 
-    return if (text != null && (text.contains("disk is full") || text.contains("error code: 13"))) {
+    return if (
+        text != null && (
+            // SQLite's errstr, and androidx.sqlite's "Error code: N, message: …" wrapper.
+            text.contains("disk is full") ||
+                text.contains("error code: 13") ||
+                // DataStore writes go through okio, which surfaces ENOSPC as
+                // strerror text on both platforms — no SQLite wording involved.
+                text.contains("no space left on device")
+            )
+    ) {
         DataError.Local.DISK_FULL
     } else {
         DataError.Local.UNKNOWN
