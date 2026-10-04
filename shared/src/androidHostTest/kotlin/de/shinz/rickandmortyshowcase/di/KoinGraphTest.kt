@@ -13,6 +13,7 @@ import de.shinz.rickandmortyshowcase.core.format.AppDateTimeManager
 import de.shinz.rickandmortyshowcase.core.ui.AppImageLoaderFactory
 import de.shinz.rickandmortyshowcase.features.characterdetail.domain.usecase.GetCharacterUseCase
 import de.shinz.rickandmortyshowcase.features.characterlist.domain.usecase.GetCharacterPageUseCase
+import de.shinz.rickandmortyshowcase.features.characterlist.presentation.assembler.CharacterListUiStateAssembler
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.AddFavoriteUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.ObserveFavoriteIdsUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.RemoveFavoriteUseCase
@@ -90,13 +91,14 @@ class KoinGraphTest {
         // Features
         koin.get<GetCharacterUseCase>()
         koin.get<GetCharacterPageUseCase>()
+        koin.get<CharacterListUiStateAssembler>()
         koin.get<ObserveFavoriteIdsUseCase>()
         koin.get<AddFavoriteUseCase>()
         koin.get<RemoveFavoriteUseCase>()
     }
 
     @Test
-    fun `use cases are factories, not singletons`() {
+    fun `use cases and assemblers are factories, not singletons`() {
         // factoryOf per CLAUDE.md: stateless and cheap, and a factory guarantees
         // no state leaks between screens. A `single` here would compile and pass
         // every other test.
@@ -110,6 +112,9 @@ class KoinGraphTest {
             .isNotSameInstanceAs(koin.get<AddFavoriteUseCase>())
         assertThat(koin.get<GetCharacterPageUseCase>())
             .isNotSameInstanceAs(koin.get<GetCharacterPageUseCase>())
+        // Assemblers are factories too, per CLAUDE.md's scope table.
+        assertThat(koin.get<CharacterListUiStateAssembler>())
+            .isNotSameInstanceAs(koin.get<CharacterListUiStateAssembler>())
     }
 
     @Test

@@ -32,6 +32,17 @@
     <string name="cd_remove_favorite">Remove %1$s from favorites</string>
 
     <!--
+      The confirmation every removal goes through, per SPEC. Only the message is
+      here: the dialog's title and its confirm label never depend on data, so
+      they stay stringResource(...) at the call site.
+
+      It names the consequence rather than restating the question the title
+      already asked — losing the offline copy is the part the user cannot see
+      from the button they tapped.
+    -->
+    <string name="favorite_remove_message">%1$s will no longer be saved for offline viewing.</string>
+
+    <!--
       Error messages, one per reachable DataError constant.
 
       Each says what happened and, where the user can do something, what. None

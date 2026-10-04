@@ -7,47 +7,29 @@ import assertk.assertions.prop
 import de.shinz.rickandmortyshowcase.core.domain.DataError
 import de.shinz.rickandmortyshowcase.core.domain.Result
 import de.shinz.rickandmortyshowcase.core.domain.datasource.FakeCharacterRemoteDataSource
-import de.shinz.rickandmortyshowcase.core.domain.model.Character
 import de.shinz.rickandmortyshowcase.core.domain.model.CharacterPage
-import de.shinz.rickandmortyshowcase.core.domain.model.CharacterStatus
+import de.shinz.rickandmortyshowcase.core.domain.model.testCharacter
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
-import kotlin.time.Instant
 
 /**
- * The one piece of real logic in Task 14: what a `404` on a page means.
+ * What this API's page responses actually mean.
  *
- * Worth testing precisely because it is a *translation* rather than a
- * pass-through — and because getting it wrong is invisible. Collapsing every
- * `NOT_FOUND` would turn a broken first page into a blank screen with no error;
- * collapsing none would end a long scroll with "We couldn't find what you were
- * looking for" and a retry button that can never succeed.
+ * Two translations, both about page 1 being different from the rest, and both
+ * invisible when wrong. Collapsing every `NOT_FOUND` would turn a broken first
+ * page into a blank screen with no error; collapsing none would end a long
+ * scroll with "We couldn't find what you were looking for" and a retry that can
+ * never succeed. Treating an empty *successful* first page as fine would leave
+ * the screen with nothing to show and nothing to scroll.
  */
 class GetCharacterPageUseCaseTest {
 
     private val remote = FakeCharacterRemoteDataSource()
     private val getCharacterPage = GetCharacterPageUseCase(remote)
 
-    private fun character(id: Int) = Character(
-        id = id,
-        name = "Character $id",
-        status = CharacterStatus.ALIVE,
-        species = "Human",
-        type = "",
-        gender = "Male",
-        originName = "Earth",
-        originUrl = "",
-        locationName = "Earth",
-        locationUrl = "",
-        imageUrl = "https://rickandmortyapi.com/api/character/avatar/$id.jpeg",
-        episodeUrls = emptyList(),
-        url = "",
-        created = Instant.parse("2017-11-04T18:48:46.250Z"),
-    )
-
     @Test
     fun servesAPageTheApiKnows() = runTest {
-        val page = CharacterPage(characters = listOf(character(1)), hasMore = true)
+        val page = CharacterPage(characters = listOf(testCharacter(1)), hasMore = true)
         remote.pages[1] = page
 
         assertThat(getCharacterPage(1))
@@ -89,6 +71,43 @@ class GetCharacterPageUseCaseTest {
             .isInstanceOf<Result.Error<DataError.Network>>()
             .prop(Result.Error<DataError.Network>::error)
             .isEqualTo(DataError.Network.NOT_FOUND)
+    }
+
+    /**
+     * A `200` carrying no characters at all is the server misbehaving, not an
+     * empty catalogue — this API answers an out-of-range page with `404`, so it
+     * has no reason to serve an empty first page.
+     *
+     * Reported here rather than left for the screen to notice, because a
+     * *successful* page advances the page counter: by the time the list could
+     * see the emptiness, a retry would ask for page 2 and show characters 21-40
+     * as the start of the list. A failure is never consumed, so retry asks for
+     * page 1 again.
+     */
+    @Test
+    fun anEmptyFirstPageIsAFailure() = runTest {
+        remote.pages[GetCharacterPageUseCase.FIRST_PAGE] =
+            CharacterPage(characters = emptyList(), hasMore = false)
+
+        assertThat(getCharacterPage(GetCharacterPageUseCase.FIRST_PAGE))
+            .isInstanceOf<Result.Error<DataError.Network>>()
+            .prop(Result.Error<DataError.Network>::error)
+            .isEqualTo(DataError.Network.SERVER_ERROR)
+    }
+
+    /**
+     * The end-of-list collapse must survive it. A later page legitimately comes
+     * back empty — that is what the `404` branch above turns a missing page into
+     * — so the empty check has to be first-page-only or paging could never stop.
+     */
+    @Test
+    fun anEmptyLaterPageStaysTheEndOfTheList() = runTest {
+        remote.pages[2] = CharacterPage(characters = emptyList(), hasMore = false)
+
+        assertThat(getCharacterPage(2))
+            .isInstanceOf<Result.Success<CharacterPage>>()
+            .prop(Result.Success<CharacterPage>::data)
+            .isEqualTo(CharacterPage(characters = emptyList(), hasMore = false))
     }
 
     /**

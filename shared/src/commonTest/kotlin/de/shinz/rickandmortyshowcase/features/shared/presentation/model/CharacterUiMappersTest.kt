@@ -5,30 +5,14 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
 import assertk.assertions.prop
-import de.shinz.rickandmortyshowcase.core.domain.model.Character
 import de.shinz.rickandmortyshowcase.core.domain.model.CharacterStatus
+import de.shinz.rickandmortyshowcase.core.domain.model.testCharacter
 import de.shinz.rickandmortyshowcase.core.ui.UiText
 import kotlin.test.Test
-import kotlin.time.Instant
 
 class CharacterUiMappersTest {
 
-    private val character = Character(
-        id = 1,
-        name = "Rick Sanchez",
-        status = CharacterStatus.ALIVE,
-        species = "Human",
-        type = "",
-        gender = "Male",
-        originName = "Earth (C-137)",
-        originUrl = "https://rickandmortyapi.com/api/location/1",
-        locationName = "Citadel of Ricks",
-        locationUrl = "https://rickandmortyapi.com/api/location/3",
-        imageUrl = "https://rickandmortyapi.com/api/character/avatar/1.jpeg",
-        episodeUrls = listOf("https://rickandmortyapi.com/api/episode/1"),
-        url = "https://rickandmortyapi.com/api/character/1",
-        created = Instant.parse("2017-11-04T18:48:46.250Z"),
-    )
+    private val character = testCharacter(id = 1, name = "Rick Sanchez")
 
     @Test
     fun carriesTheFieldsARowRenders() {

@@ -2,10 +2,9 @@ package de.shinz.rickandmortyshowcase.features.shared.presentation.model
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import de.shinz.rickandmortyshowcase.core.domain.model.Character
 import de.shinz.rickandmortyshowcase.core.domain.model.CharacterStatus
-import de.shinz.rickandmortyshowcase.core.ui.UiText
-import de.shinz.rickandmortyshowcase.core.ui.joinNonBlank
+import de.shinz.rickandmortyshowcase.core.domain.model.testCharacter
+import de.shinz.rickandmortyshowcase.core.ui.resolve
 import de.shinz.rickandmortyshowcase.generated.resources.Res
 import de.shinz.rickandmortyshowcase.generated.resources.status_alive
 import de.shinz.rickandmortyshowcase.generated.resources.status_dead
@@ -13,7 +12,6 @@ import de.shinz.rickandmortyshowcase.generated.resources.status_unknown
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.compose.resources.getString
 import kotlin.test.Test
-import kotlin.time.Instant
 
 /**
  * Reads what a row's strings actually say.
@@ -32,22 +30,7 @@ import kotlin.time.Instant
  */
 class CharacterUiStringsTest {
 
-    private val character = Character(
-        id = 1,
-        name = "Rick Sanchez",
-        status = CharacterStatus.ALIVE,
-        species = "Human",
-        type = "",
-        gender = "Male",
-        originName = "Earth (C-137)",
-        originUrl = "",
-        locationName = "Citadel of Ricks",
-        locationUrl = "",
-        imageUrl = "https://rickandmortyapi.com/api/character/avatar/1.jpeg",
-        episodeUrls = emptyList(),
-        url = "",
-        created = Instant.parse("2017-11-04T18:48:46.250Z"),
-    )
+    private val character = testCharacter(id = 1, name = "Rick Sanchez")
 
     @Test
     fun theFavoriteDescriptionInterpolatesTheName() = runTest {
@@ -80,20 +63,4 @@ class CharacterUiStringsTest {
                 .toCharacterUi(isFavorite = false).subtitle.resolve(),
         ).isEqualTo("Unknown")
     }
-}
-
-/**
- * [UiText.asString] without composition.
- *
- * `asString()` is `@Composable` — it has to be, since `stringResource` is — so a
- * test cannot call it. This mirrors it over the suspend `getString`, which is
- * the same resource lookup. The duplication is the point of risk: the *joining*
- * rule it reimplements is `joinNonBlank`, the real one, so only the resolution
- * is restated.
- */
-private suspend fun UiText.resolve(): String = when (this) {
-    is UiText.DynamicString -> value
-    is UiText.StringResourceText ->
-        if (args.isEmpty()) getString(id) else getString(id, *args.toTypedArray())
-    is UiText.Joined -> joinNonBlank(parts.map { it.resolve() }, separator)
 }

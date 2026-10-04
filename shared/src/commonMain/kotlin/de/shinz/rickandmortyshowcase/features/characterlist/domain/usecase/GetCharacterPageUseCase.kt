@@ -23,13 +23,28 @@ import de.shinz.rickandmortyshowcase.core.domain.model.CharacterPage
  * "no characters exist"; it is the API being broken or having moved, and turning
  * it into an empty success would render a blank screen with no error and no
  * retry. So only pages after the first collapse into end-of-list.
+ *
+ * The mirror image is here too: **an empty page 1 that *succeeded* is also a
+ * failure.** An API that answers an out-of-range page with 404 has no reason to
+ * return `200` with no characters, so that response is the server misbehaving —
+ * and left as a success it would leave the screen with nothing to show, nothing
+ * to scroll, and so no way to ask for anything again. Reporting it here rather
+ * than letting the screen notice later is what keeps the page counter from
+ * advancing: a failed page is never consumed, so a retry asks for page 1 again
+ * instead of page 2.
  */
 class GetCharacterPageUseCase(
     private val remoteCharacters: CharacterRemoteDataSource,
 ) {
     suspend operator fun invoke(page: Int): Result<CharacterPage, DataError.Network> =
         when (val result = remoteCharacters.fetchCharacterPage(page)) {
-            is Result.Success -> result
+            is Result.Success ->
+                if (page == FIRST_PAGE && result.data.characters.isEmpty()) {
+                    Result.Error(DataError.Network.SERVER_ERROR)
+                } else {
+                    result
+                }
+
             is Result.Error ->
                 if (page > FIRST_PAGE && result.error == DataError.Network.NOT_FOUND) {
                     Result.Success(END_OF_LIST)
