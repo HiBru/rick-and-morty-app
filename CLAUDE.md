@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Screen-by-screen behaviour lives in [docs/SPEC.md](docs/SPEC.md) — read it before implementing a feature.**
 **Task order, dependency rationale and locked decisions live in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) — read it before starting any task.**
 
-As of Task 0 the repo is a scaffold: `App.kt` is an empty composable and the `Platform`/test classes are stubs, so most feature work means creating new structure rather than editing existing code. The plan's checklist is the current state of play.
+The app is still being built out: `App.kt` is an empty composable, so most feature work means creating new structure rather than editing existing code. **The plan's checklist is the current state of play** — the first unticked box is what's next.
 
 ## Commands
 
@@ -24,7 +24,7 @@ As of Task 0 the repo is a scaffold: `App.kt` is an empty composable and the `Pl
 ./gradlew :shared:allTests                                   # all targets
 ./gradlew :shared:testAndroidHostTest                        # JVM/host tests (commonTest + androidHostTest)
 ./gradlew :shared:iosSimulatorArm64Test                      # iOS tests (commonTest + iosTest)
-./gradlew :shared:testAndroidHostTest --tests "de.shinz.rickandmortyshowcase.SharedCommonTest"
+./gradlew :shared:testAndroidHostTest --tests "de.shinz.rickandmortyshowcase.ToolchainCommonTest"
 ./gradlew :shared:connectedAndroidDeviceTest                 # instrumented; no device tests exist yet
 
 # Lint / verification

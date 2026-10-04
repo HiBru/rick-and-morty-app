@@ -14,7 +14,7 @@ Tick the checkbox **in the same commit as the task's code**. That way `git log` 
 
 ### Foundation — verify with review + both-platform build + tests
 
-- [ ] **1.** Dependencies & Gradle wiring — *`android-module-structure`*. Detail below
+- [x] **1.** Dependencies & Gradle wiring — *`android-module-structure`*. Detail below
 - [ ] **2.** Design system: tokens + `AppTheme` — *`android-compose-ui`*
 - [ ] **3.** `core/domain`: `Result`/`Error`/`DataError`, models, **all four data-source + repository interfaces** — *`android-error-handling`, `android-domain-usecases`*
 - [ ] **4.** `core/ui`: `UiText`, `ObserveAsEvents`, `toUiText()`, string resources — *`android-presentation-mvi`, `android-error-handling`*
@@ -61,7 +61,7 @@ Versions were chosen **proven-over-newest**. "Proven" (**P**) means the referenc
 | Coroutines | `1.11.0` (core + test) | **Not proven** — the reference runs 1.10.2. Ktor 3.6.0 declares 1.11.0, and declaring it explicitly avoids a conflict with the scaffold's previously-resolved 1.9.0 |
 | JUnit | `junit-jupiter:5.11.4` **P** + `junit-platform-launcher:1.11.4` **P** | **Not JUnit 6**, which is unified-versioned (the launcher would also be 6.x) and unverified on an AGP 9 host-test task |
 | Turbine / AssertK | `1.2.1` **P** / `0.28.1` **P** | Latest of each; both multiplatform. AssertK 0.28.1 is from 2024 and nothing newer exists |
-| kotlinx-datetime | **do not declare it** | Kotlin 2.4.20's stdlib has `kotlin.time.Instant`, which is all we need to parse the API's ISO-8601 `created`; formatting goes through platform formatters anyway. **If Task 5 or 6 proves it necessary, declare `0.7.1`, not `0.8.0`** — 0.7.1 is already resolved transitively in this repo via `material3 1.12.0-alpha03`, and the reference pins it for exactly that reason. Record the outcome here |
+| kotlinx-datetime | **not declared — settled in Task 1** | `kotlin.time.Instant.parse` handles the API's ISO-8601 `created` field, needs no opt-in, and is proven on **both** platforms by `ToolchainCommonTest.stdlibInstantParsesTheApiTimestampFormat`. Formatting goes through platform formatters anyway. If some later task genuinely needs the library, declare `0.7.1` (already resolved transitively via `material3 1.12.0-alpha03`), **not** `0.8.0` |
 
 AGP stays at **9.1.1** and `shared/build.gradle.kts` keeps its `kotlin { android { … } }` spelling. AGP 9.2.1 renamed that accessor to `androidLibrary { }`; the reference project uses the newer spelling, so its build files cannot be copied verbatim.
 
@@ -81,6 +81,11 @@ AGP stays at **9.1.1** and `shared/build.gradle.kts` keeps its `kotlin { android
   }
   ```
   Without it, JUnit5 tests are **skipped and the build reports success**. Gradle 9.8 also removed auto-injection of test-framework runtime deps, so `junit-platform-launcher` must be `runtimeOnly` or the task fails to start. `kotlin-test-junit5` in `androidHostTest` is what makes `commonTest`'s `kotlin.test` annotations run under JUnit Platform on the JVM side.
+- **`androidHostTest` must always hold at least one directly `@org.junit.jupiter.api.Test`-annotated test.** It is the only thing that can detect `useJUnitPlatform()` regressing: `commonTest`'s `kotlin.test` tests keep running via `kotlin-test-junit5` either way, so nothing else would report zero discovery. `ToolchainJvmTest` fills that role until a real ViewModel test replaces it in Task 16 — **replace, do not delete.**
+- **The Koin BOM does not reach the test source sets.** `platform(libs.koin.bom)` in `commonMain` constrains `androidMain`'s versionless `koin-android` (verified), but `commonTest` / `androidHostTest` do not extend `commonMainImplementation`. The first versionless Koin artifact added there — `koin-test` is the likely one — needs its own `implementation(project.dependencies.platform(libs.koin.bom))` or it fails with "Could not find io.insert-koin:koin-test".
+- **No Compose UI-test artifact is wired yet.** `CLAUDE.md` describes `ComposeTestRule` and the robot pattern, but nothing declares the dependency and no task below owns adding it. If a UI test is wanted, wire it in the task that first needs one (Task 17 at the earliest).
+- **`:shared:connectedAndroidDeviceTest` has no runner dependency.** `withDeviceTestBuilder` names `AndroidJUnitRunner`, but Task 1 removed the scaffold's `androidx.test` catalog entries as unused. An instrumented test therefore needs `androidx.test:runner` re-added plus an `androidDeviceTest` dependency block — or drop the device-test builder, since no device tests exist.
+- **There is no typed `androidHostTest` source-set accessor.** `androidHostTest.dependencies { }` fails to compile the build script; use `getByName("androidHostTest").dependencies { }`. (`androidMain`, `commonMain`, `commonTest` and `iosMain` all do have accessors.)
 - **`compose-ui-backhandler`** must be declared explicitly *if* `BackHandler` is ever used: `compose-ui` pulls it in transitively on iOS but not on Android, so such code compiles for iOS and breaks the Android build.
 - Set `compose.resources { packageOfResClass = "de.shinz.rickandmortyshowcase.generated.resources" }`. `publicResClass` is unnecessary in a single module.
 - Do **not** add `de.mannodermaus.android-junit5` — it drives the old `com.android.library` `testOptions` DSL, which this plugin does not have.
@@ -105,7 +110,7 @@ Without the serialization plugin, every DTO and every `@Serializable` route fail
 |---|---|
 | `commonMain` | `koin-core`, `koin-compose`, `koin-compose-viewmodel` (all three versionless, via `koin-bom` platform); `ktor-client-core`, `ktor-client-content-negotiation`, `ktor-serialization-kotlinx-json`, `ktor-client-logging`; `kotlinx-serialization-json`; `kotlinx-coroutines-core`; `androidx.room:room-runtime` (**`api`**, not `implementation`); `androidx.sqlite:sqlite-bundled`; `androidx.datastore:datastore-preferences`; `org.jetbrains.androidx.navigation:navigation-compose`; `io.coil-kt.coil3:coil-compose`; `io.coil-kt.coil3:coil-network-ktor3` |
 | `androidMain` | `koin-android`; `ktor-client-okhttp` |
-| `iosMain` | `ktor-client-darwin` — **this source set does not exist yet and must be created** |
+| `iosMain` | `ktor-client-darwin`. The source set already exists via the default hierarchy template (it holds `MainViewController.kt` and `Platform.ios.kt`) and is never declared in `shared/build.gradle.kts` — only its `dependencies { }` block is new |
 | `commonTest` | `kotlin-test`; `assertk`; `turbine`; `kotlinx-coroutines-test`; `ktor-client-mock` |
 | `androidHostTest` | `junit-jupiter`; `kotlin-test-junit5`; `runtimeOnly(junit-platform-launcher)` — **this dependency block does not exist yet and must be created** |
 
@@ -259,10 +264,10 @@ The scaffold contains three things that contradict `CLAUDE.md`. **Task 10 remove
 |---|---|
 | Koin 4.1.1 forced up to lifecycle 2.11.0 (it declares 2.9.6) | Proven in the reference project with the same forced upgrade. If it still breaks, Koin 4.2.2 is the only move — but it is a coin-flip, not a known-good fallback: it is built against 2.9.6 too. Lifecycle cannot be downgraded, since CMP 1.12.1 requires 2.11.0 |
 | `SavedStateHandle` injection into a `koinViewModel()` on iOS requires the `ViewModelStoreOwner` to be a `NavBackStackEntry` | Ours is — the detail ViewModel is resolved inside `composable<CharacterDetailRoute>`. If it still fails: read the route in the Root via `backStackEntry.toRoute()` and pass the id with `koinViewModel { parametersOf(id) }` |
-| Room Gradle plugin vs AGP 9.1.1 is unverified in either Room line | The plugin is optional — drop it and pass `room.schemaLocation` as a KSP argument |
+| ~~Room Gradle plugin vs AGP 9.1.1~~ — **applies and configures cleanly** (Task 1: `:shared:copyRoomSchemas` runs as `NO-SOURCE`, and both `kspAndroidMain` and `kspKotlinIosSimulatorArm64` execute). Codegen itself is still unproven until an entity exists | If Task 7 finds it broken, the plugin is optional — drop it and pass `room.schemaLocation` as a KSP argument |
 | `navigation-compose:2.10.0-beta01` is a beta | It is what JetBrains prescribe for CMP 1.12.1; the stable release conflicts with lifecycle 2.11.0. No better option exists |
-| AssertK 0.28.1 predates Kotlin 2.x native, and only its JVM variant is cached | If the iOS klib fails to resolve, keep AssertK in `androidHostTest` only and use plain `kotlin.test` assertions in `commonTest`. **If this fallback is taken, amend `CLAUDE.md`'s testing table in the same commit** |
-| Ktor has never resolved on this machine | Surfaces in Task 1 as a resolution error, not later |
+| ~~AssertK 0.28.1 predates Kotlin 2.x native~~ — **resolved and runs on iOS**, proven in Task 1 by `ToolchainCommonTest` executing 3 tests under `iosSimulatorArm64Test`. Turbine likewise | — |
+| ~~Ktor has never resolved on this machine~~ — **3.6.0 resolves**, Task 1 built both platforms with it on the classpath. Nothing exercises a request yet; Task 6 does | — |
 | A fresh context re-litigates a settled decision — bumps a dependency, splits the module, swaps the assembler signature | This file exists for that: every such decision is recorded with its *reason*, not just its value |
 | `xcodebuild -scheme iosApp` relies on a scheme stored under `iosApp/iosApp.xcodeproj/xcuserdata/`, which `.gitignore` excludes | It works on this machine. From a clean clone, either share the scheme in Xcode (writing it to `xcshareddata`, which **is** tracked) or open the project in Xcode once to regenerate it |
 
