@@ -4,6 +4,8 @@
     <!-- Actions. Static labels, so they live here rather than in a UiText. -->
     <string name="action_retry">Retry</string>
     <string name="action_cancel">Cancel</string>
+    <!-- Names the destructive action rather than saying OK. -->
+    <string name="action_remove">Remove</string>
 
     <!-- Bottom navigation. The real screens reuse these as their titles. -->
     <string name="nav_home">Home</string>
@@ -40,6 +42,7 @@
       already asked — losing the offline copy is the part the user cannot see
       from the button they tapped.
     -->
+    <string name="favorite_remove_title">Remove favorite?</string>
     <string name="favorite_remove_message">%1$s will no longer be saved for offline viewing.</string>
 
     <!--

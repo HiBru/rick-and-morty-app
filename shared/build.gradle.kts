@@ -111,6 +111,17 @@ kotlin {
             implementation(libs.kotlin.test.junit5)
             runtimeOnly(libs.junit.platform.launcher)
         }
+        // Compose UI tests live on the iOS side only, and that is a platform
+        // limit rather than a preference: `runComposeUiTest` needs a real
+        // Compose host, which on Android means instrumentation on a device or
+        // emulator — `androidHostTest` is a plain JVM source set. Semantics are
+        // platform-independent, so asserting the tree here covers both.
+        // Unlike `androidHostTest`, this one must use its typed accessor:
+        // `getByName("iosTest")` fails configuration with "KotlinSourceSet with
+        // name 'iosTest' not found" — the source set is created lazily.
+        iosTest.dependencies {
+            implementation(libs.compose.uiTest)
+        }
     }
 }
 

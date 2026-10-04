@@ -52,6 +52,18 @@ private val StatusDeadDark = Color(0xFFF87171)
 private val StatusUnknownLight = OnSurfaceMutedLight
 private val StatusUnknownDark = OnSurfaceMutedDark
 
+/*
+ * The snackbar's surface: deliberately the *opposite* side of the theme, so a
+ * transient message reads as sitting on top of the app rather than in it. These
+ * are their own tokens rather than a reuse of `onSurface`/`background`, even
+ * though the values coincide today: those two are tuned for text contrast on a
+ * surface, and retuning either would otherwise move the snackbar with them.
+ */
+private val InverseSurfaceLight = Color(0xFF1A1D20)
+private val InverseSurfaceDark = Color(0xFFE8EAED)
+private val OnInverseSurfaceLight = Color(0xFFFAFAFA)
+private val OnInverseSurfaceDark = Color(0xFF181B1E)
+
 /** A dim behind dialogs. Identical in both themes — it darkens what is there. */
 private val Scrim = Color(0x99000000)
 
@@ -73,6 +85,9 @@ data class AppColors(
     val accent: Color,
     val onAccent: Color,
     val border: Color,
+    /** The snackbar's background — the theme inverted. Not a surface variant. */
+    val inverseSurface: Color,
+    val onInverseSurface: Color,
     val statusAlive: Color,
     val statusDead: Color,
     val statusUnknown: Color,
@@ -87,6 +102,8 @@ val appLightColors = AppColors(
     accent = AccentLight,
     onAccent = OnAccentLight,
     border = BorderLight,
+    inverseSurface = InverseSurfaceLight,
+    onInverseSurface = OnInverseSurfaceLight,
     statusAlive = StatusAliveLight,
     statusDead = StatusDeadLight,
     statusUnknown = StatusUnknownLight,
@@ -101,6 +118,8 @@ val appDarkColors = AppColors(
     accent = AccentDark,
     onAccent = OnAccentDark,
     border = BorderDark,
+    inverseSurface = InverseSurfaceDark,
+    onInverseSurface = OnInverseSurfaceDark,
     statusAlive = StatusAliveDark,
     statusDead = StatusDeadDark,
     statusUnknown = StatusUnknownDark,
@@ -154,8 +173,8 @@ val LightColorScheme = lightColorScheme(
     surfaceContainerHighest = SurfaceVariantLight,
     surfaceDim = SurfaceVariantLight,
     surfaceBright = SurfaceLight,
-    inverseSurface = OnSurfaceLight,
-    inverseOnSurface = BackgroundLight,
+    inverseSurface = InverseSurfaceLight,
+    inverseOnSurface = OnInverseSurfaceLight,
     inversePrimary = AccentDark,
     outline = BorderLight,
     outlineVariant = BorderLight,
@@ -188,8 +207,8 @@ val DarkColorScheme = darkColorScheme(
     surfaceContainerHighest = SurfaceVariantDark,
     surfaceDim = SurfaceVariantDark,
     surfaceBright = SurfaceDark,
-    inverseSurface = OnSurfaceDark,
-    inverseOnSurface = SurfaceDark,
+    inverseSurface = InverseSurfaceDark,
+    inverseOnSurface = OnInverseSurfaceDark,
     inversePrimary = AccentLight,
     outline = BorderDark,
     outlineVariant = BorderDark,

@@ -20,6 +20,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import de.shinz.rickandmortyshowcase.core.designsystem.theme.AppTheme
+import de.shinz.rickandmortyshowcase.features.characterlist.presentation.CharacterListRoot
 
 /**
  * The outer host: the dashboard, and the detail screen that covers it.
@@ -43,7 +44,7 @@ fun AppNavHost(
     ) {
         composable<DashboardRoute> {
             DashboardScreen(
-                onNavigateToDetail = { id -> navController.navigate(CharacterDetailRoute(id)) },
+                onNavigateToDetail = navController::navigateToDetailOnce,
             )
         }
         composable<CharacterDetailRoute> { entry ->
@@ -99,11 +100,9 @@ private fun DashboardScreen(
             exitTransition = { fadeOut() },
         ) {
             composable<HomeRoute> {
-                PlaceholderScreen(
-                    title = "Home",
-                    replacedBy = "Task 17",
+                CharacterListRoot(
                     contentPadding = innerPadding,
-                    onRowClick = onNavigateToDetail,
+                    onNavigateToDetail = onNavigateToDetail,
                 )
             }
             composable<FavoritesRoute> {
@@ -124,6 +123,37 @@ private fun DashboardScreen(
             }
         }
     }
+}
+
+/**
+ * Opens the detail screen, at most once per tap.
+ *
+ * `ObserveAsEvents` collects on `Dispatchers.Main.immediate`, so a row
+ * double-tapped in one frame produces two events that are both handled before
+ * the frame ends. `navigate` updates the back stack synchronously, so by the
+ * second one the current destination is already detail — which is what this
+ * check reads.
+ *
+ * *An earlier revision also required the entry to be `RESUMED`, to stop a
+ * navigation event that had queued behind the detail screen from firing on
+ * return. That cure was worse: an entry only becomes `RESUMED` when its
+ * transition **completes**, and the outer host animates for 700ms on Android,
+ * during which Home is visible and hittable — so every tap in that window was
+ * silently swallowed, with a ripple and nothing else. The case it protected is
+ * much narrower than it first looks, because a second tap needs a visible,
+ * interactive Home: it requires one landing exactly as the collector stops.*
+ *
+ * The residual race is recorded in `docs/IMPLEMENTATION_PLAN.md` along with the
+ * fix that would close it properly — a replay-free `MutableSharedFlow` for
+ * navigation, which drops rather than buffers when nothing is collecting.
+ *
+ * Neither check belongs in the Root, which has no view of the back stack.
+ */
+private fun NavHostController.navigateToDetailOnce(characterId: Int) {
+    val entry = currentBackStackEntry ?: return
+    if (!entry.destination.hasRoute<DashboardRoute>()) return
+
+    navigate(CharacterDetailRoute(characterId))
 }
 
 /**
