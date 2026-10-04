@@ -294,10 +294,11 @@ The skills leave these unanswered. Most now have a recorded answer in `docs/IMPL
 3. **JUnit5 on `androidHostTest`** needs `useJUnitPlatform()` applied to the task, and `junit-platform-launcher` declared explicitly under Gradle 9. Both are in the plan; without them tests are skipped and the build still passes.
 4. **The navigation artifact and version** are locked in the plan — a beta, deliberately, because the stable release conflicts with our lifecycle version. Not a free choice.
 
+5. **`.dataOrNull()`** appears in a skill example but is not among the four defined `Result` helpers. Answered: deliberately **not** defined — the plan says why, and to unwrap with an exhaustive `when`.
+
 **Still genuinely open:**
 
-5. **DataStore has no conventions** in any skill — no key naming, no `Preferences`-vs-typed guidance.
-6. **`.dataOrNull()`** appears in a skill example but is not among the four defined `Result` helpers — add it deliberately or avoid it.
+6. **DataStore has no conventions** in any skill — no key naming, no `Preferences`-vs-typed guidance.
 
 Settled, and recorded here because the skills point the wrong way: the error-handling skill's `constructRoute` reads `BuildConfig.BASE_URL`, which does not exist in `commonMain` — this project uses a plain `const val BASE_URL` in `core/data/`, which is safe because the API is public and has no secret.
 

@@ -16,11 +16,11 @@ Tick the checkbox **in the same commit as the task's code**. That way `git log` 
 
 - [x] **1.** Dependencies & Gradle wiring — *`android-module-structure`*. Detail below
 - [x] **2.** Design system: tokens + `AppTheme` — *`android-compose-ui`*
-- [ ] **3.** `core/domain`: `Result`/`Error`/`DataError`, models, **all four data-source + repository interfaces** — *`android-error-handling`, `android-domain-usecases`*. **`ThemeMode` already exists** — Task 2 needed it for `AppTheme(themeMode)`; do not duplicate it
+- [x] **3.** `core/domain`: `Result`/`Error`/`DataError`, models, **all four data-source + repository interfaces** — *`android-error-handling`, `android-domain-usecases`*. **`ThemeMode` already exists** — Task 2 needed it for `AppTheme(themeMode)`; do not duplicate it
 - [ ] **4.** `core/ui`: `UiText`, `ObserveAsEvents`, `toUiText()`, string resources — *`android-presentation-mvi`, `android-error-handling`*
 - [ ] **5.** `core/format`: `AppDateTimeManager` + platform formatters — *`android-date-time-manager`*
 - [ ] **6.** `core/data`: Ktor client, `safeCall`, DTOs, mappers, `KtorCharacterRemoteDataSource` — *`android-data-layer`, `android-error-handling`*
-- [ ] **7.** `core/database`: Room favorites + `RoomFavoriteCharacterLocalDataSource`. **Also verifies Task 1's per-target KSP wiring** — *`android-data-layer`*
+- [ ] **7.** `core/database`: Room favorites + `RoomFavoriteCharacterLocalDataSource`. **Also verifies Task 1's per-target KSP wiring** — *`android-data-layer`*. Four obligations the Task 3 contract creates: an **`addedAt` column** (not part of the API record, and the only thing that can order `observeFavorites()` most-recently-favourited first — `Character.created` is the API's own timestamp and is unrelated); **`distinctUntilChanged()`** on `observeFavoriteIds()`, since Room invalidates per *table* so even a `SELECT id` query re-emits on any write; **`catch`** on both observe functions, which have no error channel; and store `episodeUrls` as a JSON string with `created` as epoch millis (`Instant.toEpochMilliseconds` / `fromEpochMilliseconds` round-trips the API's millisecond precision exactly)
 - [ ] **8.** DataStore theme data source in `core/data`; theme use cases in `core/domain/usecase` — *`android-data-layer`, `android-domain-usecases`*
 - [ ] **9.** `LocalFirstCharacterRepository` + `GetCharacterUseCase` — *`android-data-layer`, `android-domain-usecases`, `android-testing`*
 - [ ] **10.** Koin modules + Android/iOS entry points + `App()` theme wiring + scaffold cleanup — *`android-di-koin`*
@@ -218,10 +218,20 @@ navigation/                 Routes, AppNavHost, AppBottomBar
 |---|---|---|
 | `CharacterRemoteDataSource` | `KtorCharacterRemoteDataSource` | `DataError.Network` |
 | `FavoriteCharacterLocalDataSource` | `RoomFavoriteCharacterLocalDataSource` | `DataError.Local` |
-| `ThemePreferencesDataSource` | `DataStoreThemePreferencesDataSource` | reads: `Flow<ThemeMode>`, cannot fail. writes: `EmptyResult<DataError.Local>` |
+| `ThemePreferencesLocalDataSource` | `DataStoreThemePreferencesLocalDataSource` | reads: `Flow<ThemeMode>`, cannot fail. writes: `EmptyResult<DataError.Local>` |
 | `CharacterRepository` | `LocalFirstCharacterRepository` | `DataError` |
 
 All four interfaces are created in **Task 3**; the implementations land in Tasks 6–9.
+
+### Domain decisions made in Task 3 — do not "correct" these
+
+- **`DataError` is deliberately shorter than the canonical list in `android-error-handling`.** `Network` has 7 constants and `Local` has 2. There is no `UNAUTHORIZED`, `FORBIDDEN`, `CONFLICT`, `BAD_REQUEST` or `PAYLOAD_TOO_LARGE` because the API is public and read-only — the app never authenticates and never uploads. Every constant costs a branch *and* a user-facing string in `toUiText()`, so an unreachable one is a string explaining a login the user does not have. Anything unexpected is `Network.UNKNOWN`.
+- **`Local` has no `NOT_FOUND`.** A character that is not favourited is the normal case, so `getFavorite` returns `Result<Character?, DataError.Local>` and reserves `Result.Error` for things that actually went wrong. That is what lets the detail screen read a miss as "fetch from the API" rather than as an error to display. Deleting an absent row is a no-op for the same reason.
+- **`Character` carries `originUrl`, `locationUrl`, `episodeUrls` and `url` even though no screen shows them.** `SPEC.md` requires favouriting to persist the whole API record for offline rendering, and the database is only reachable through this model. The detail screen's episode count is `episodeUrls.size`.
+- **Only `status` is an enum.** It is the one character field that drives a colour as well as a label. `species`, `type` and `gender` stay `String`: their values are unbounded (Human, Alien, Poopybutthole, …) and are displayed as the API words them.
+- **`observeThemeMode()` returns `Flow<ThemeMode>`, not `Flow<Result<…>>`.** A theme preference has a sane default, so a failed read falls back to `SYSTEM` rather than becoming something the user has to see. The *write* does report failure.
+- **The two favourites `observe…` functions also have no error channel**, for the same reason: `SPEC.md` gives the Favorites screen an empty state but no error state. A read failure degrades to "no favourites". **This obliges Task 7 to absorb failure with `catch` inside the implementation** — otherwise a Room error or a malformed episode-url column reaches the collector as a raw exception, which `CLAUDE.md` forbids outright.
+- **`.dataOrNull()` is deliberately not defined.** `Result` has exactly the four helpers the skill specifies. The skill set uses `dataOrNull()` in one example, but this app's only multi-state unwrap is Task 9's `getCharacter`, which has three outcomes worth naming (failure / absent / present) and reads better as an exhaustive `when` than as a null-collapse that silently discards which error occurred. Unwrap with `when`. *(Closes the open item that was listed in `CLAUDE.md`.)*
 
 `CharacterRepository` exists **only** for `getCharacter(id)` — the one genuinely multi-source read (local row if present, else remote) that the detail screen needs. Everything else talks to a data source directly, because `CLAUDE.md` reserves the word "repository" for multi-source coordination.
 
