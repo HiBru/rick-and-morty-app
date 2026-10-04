@@ -129,7 +129,11 @@ Three placement decisions and why:
 
 Lives in `core/designsystem/` and owns **every** design value in the app. There is no reference design or prototype — the design system *is* the source of truth. Visual direction: modern, elegant, restrained.
 
-Pattern per group: `@Immutable data class App<Group>` → `val LocalApp<Group> = staticCompositionLocalOf { App<Group>() }` → read as `AppTheme.<group>`. The `AppTheme { }` wrapper provides all six; only colors and typography vary by theme, so hoist the other four to top-level `val`s instead of allocating per composition.
+Pattern per group: `@Immutable data class App<Group>` → `val LocalApp<Group> = staticCompositionLocalOf { App<Group>() }` → read as `AppTheme.<group>`. The `AppTheme { }` wrapper provides all six.
+
+**Only `colors` varies by theme**, so the other five are hoisted to top-level `val`s instead of being allocated per composition. Typography is among them because the app uses the system font: the reference project remembers its typography inside composition only because Compose Resources' `Font()` is itself `@Composable`, and with no custom font there is nothing to remember.
+
+`AppTheme` is both a composable and an object — the same shape Material 3 uses for `MaterialTheme`. `AppTheme { }` wraps, `AppTheme.colors` reads.
 
 **The six groups are fixed:** `colors`, `spacing`, `radius`, `size`, `border`, `typography`. There is no `FontSize` group.
 

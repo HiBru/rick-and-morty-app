@@ -15,8 +15,8 @@ Tick the checkbox **in the same commit as the task's code**. That way `git log` 
 ### Foundation — verify with review + both-platform build + tests
 
 - [x] **1.** Dependencies & Gradle wiring — *`android-module-structure`*. Detail below
-- [ ] **2.** Design system: tokens + `AppTheme` — *`android-compose-ui`*
-- [ ] **3.** `core/domain`: `Result`/`Error`/`DataError`, models, **all four data-source + repository interfaces** — *`android-error-handling`, `android-domain-usecases`*
+- [x] **2.** Design system: tokens + `AppTheme` — *`android-compose-ui`*
+- [ ] **3.** `core/domain`: `Result`/`Error`/`DataError`, models, **all four data-source + repository interfaces** — *`android-error-handling`, `android-domain-usecases`*. **`ThemeMode` already exists** — Task 2 needed it for `AppTheme(themeMode)`; do not duplicate it
 - [ ] **4.** `core/ui`: `UiText`, `ObserveAsEvents`, `toUiText()`, string resources — *`android-presentation-mvi`, `android-error-handling`*
 - [ ] **5.** `core/format`: `AppDateTimeManager` + platform formatters — *`android-date-time-manager`*
 - [ ] **6.** `core/data`: Ktor client, `safeCall`, DTOs, mappers, `KtorCharacterRemoteDataSource` — *`android-data-layer`, `android-error-handling`*
@@ -162,14 +162,16 @@ background      #FAFAFA    #0F1113
 surface         #FFFFFF    #181B1E
 surfaceVariant  #F1F3F5    #21252A
 onSurface       #1A1D20    #E8EAED
-onSurfaceMuted  #6B7280    #9AA3AD
+onSurfaceMuted  #5B636E    #9AA3AD
 accent          #0F766E    #2DD4BF
 onAccent        #FFFFFF    #0F1113
 border          #E4E7EB    #2A2F35
-statusAlive     #16A34A    #4ADE80
-statusDead      #DC2626    #F87171
-statusUnknown   #9CA3AF    #6B7280
+statusAlive     #15803D    #4ADE80
+statusDead      #B91C1C    #F87171
+statusUnknown   #5B636E    #9AA3AD   (= onSurfaceMuted, deliberately)
 ```
+
+**These four light values are not the first choices — do not "restore" them.** The originals failed WCAG AA and were corrected in Task 2 against measured ratios: `onSurfaceMuted #6B7280` was 4.35:1 on `surfaceVariant`, `statusAlive #16A34A` was 2.96:1, `statusDead #DC2626` was 4.34:1, and `statusUnknown`'s light/dark pair was transposed, leaving a light grey on white at 2.54:1. All 36 foreground/background pairs now pass 4.5:1, worst case 4.51:1. The status colours tint a label as well as a dot, so the bar is 4.5:1, not the 3:1 a non-text graphic would get.
 
 - `AppSpacing` — scale steps `xs 4`, `sm 8`, `md 12`, `lg 16`, `xl 24` on a 4dp rhythm, plus the named `screenPadding 20`. `screenPadding` is a named token, not a sixth step, so the 5–6 step ceiling in `CLAUDE.md` is not yet reached
 - `AppRadius` — `sm 8`, `md 12`, `lg 16`, `full 999`
@@ -177,9 +179,15 @@ statusUnknown   #9CA3AF    #6B7280
 - `AppBorder` — `hairline 1`
 - `AppTypography` — `displayTitle 28`, `screenTitle 22`, `cardTitle 17`, `body 15`, `caption 13`
 
-Only `colors` and `typography` vary by theme; the other four are hoisted to top-level `val`s.
+**Only `colors` varies by theme**; the other five are hoisted to top-level `val`s. Typography is hoisted too because the app uses the system font — the reference project remembers its typography inside composition only because Compose Resources' `Font()` is `@Composable`, which does not apply here.
+
+The same five styles are also mapped onto the Material 3 slots as `appMaterialTypography` and handed to `MaterialTheme(typography = …)`. Material components read `MaterialTheme.typography`, never `AppTheme.typography`, so without the mapping a dialog renders at stock M3 sizes and does not match the screen behind it.
+
+**An unmapped slot is not a graceful fallback — it is stock Material purple or a stock size.** Finding them means checking which token each component actually reads, not assuming. The three that bit in Task 2: `secondaryContainer`/`onSecondaryContainer` is the `NavigationBar` selected pill (on screen for all three tabs), `surfaceContainerHigh` is every `AlertDialog` background (three screens per `SPEC.md`), and `headlineSmall` — not `headlineMedium` — is the `AlertDialog` **title**. Equally, do not override a slot that already fits: `labelLarge` mapped to `cardTitle` made every dialog button 21% larger than M3 intends, so the label slots are left stock.
 
 > **Name trap:** `border` is both a *color* (`AppTheme.colors.border`) and a *group* (`AppTheme.border.hairline`). Same class of trap as `size` shadowing `DrawScope.size` — read the line twice before assuming which one a call site wants.
+
+> **Silent failure to watch for:** every `staticCompositionLocalOf` has a default, so a token group dropped from `AppTheme`'s `CompositionLocalProvider` still compiles and still renders. For the five dimension groups the default *is* the value, so nothing breaks — but `LocalAppColors` defaults to `appLightColors`, which means a missing `provides` would leave dark mode silently light. No Compose test artifact is wired to catch this, so **Task 10's launch check must look at dark mode on both platforms**, not just that the app starts.
 
 ## Target structure
 
