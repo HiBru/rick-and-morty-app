@@ -12,6 +12,7 @@ import de.shinz.rickandmortyshowcase.core.domain.usecase.SetThemeModeUseCase
 import de.shinz.rickandmortyshowcase.core.format.AppDateTimeManager
 import de.shinz.rickandmortyshowcase.core.ui.AppImageLoaderFactory
 import de.shinz.rickandmortyshowcase.features.characterdetail.domain.usecase.GetCharacterUseCase
+import de.shinz.rickandmortyshowcase.features.characterlist.domain.usecase.GetCharacterPageUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.AddFavoriteUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.ObserveFavoriteIdsUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.RemoveFavoriteUseCase
@@ -88,6 +89,7 @@ class KoinGraphTest {
 
         // Features
         koin.get<GetCharacterUseCase>()
+        koin.get<GetCharacterPageUseCase>()
         koin.get<ObserveFavoriteIdsUseCase>()
         koin.get<AddFavoriteUseCase>()
         koin.get<RemoveFavoriteUseCase>()
@@ -106,6 +108,8 @@ class KoinGraphTest {
             .isNotSameInstanceAs(koin.get<ObserveThemeModeUseCase>())
         assertThat(koin.get<AddFavoriteUseCase>())
             .isNotSameInstanceAs(koin.get<AddFavoriteUseCase>())
+        assertThat(koin.get<GetCharacterPageUseCase>())
+            .isNotSameInstanceAs(koin.get<GetCharacterPageUseCase>())
     }
 
     @Test

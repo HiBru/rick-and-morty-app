@@ -1,6 +1,7 @@
 package de.shinz.rickandmortyshowcase.di
 
 import de.shinz.rickandmortyshowcase.features.characterdetail.domain.usecase.GetCharacterUseCase
+import de.shinz.rickandmortyshowcase.features.characterlist.domain.usecase.GetCharacterPageUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.AddFavoriteUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.ObserveFavoriteIdsUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.RemoveFavoriteUseCase
@@ -29,7 +30,9 @@ val appModule: Module = module {
     // characterdetail
     factoryOf(::GetCharacterUseCase)
 
-    // characterlist — Task 14
+    // characterlist
+    factoryOf(::GetCharacterPageUseCase)
+    // assembler — Task 15, ViewModel — Task 16
     // favorites — Task 20
     // settings — Task 21 (its use cases live in coreDataStoreModule, since the
     // composition root needs them too)
