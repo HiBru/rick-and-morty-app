@@ -1,6 +1,6 @@
 # App Specification
 
-Screen behaviour and flows. Architecture, naming, and stack decisions live in [CLAUDE.md](../CLAUDE.md) — this file deliberately names no classes.
+Screen behaviour and flows. Architecture, naming, and stack decisions live in [CLAUDE.md](../CLAUDE.md); task order, dependency rationale and locked decisions live in [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md). This file deliberately names no classes.
 
 All user-facing copy is **English**.
 

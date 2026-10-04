@@ -7,15 +7,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `RickAndMortyShowcase` — a Kotlin Multiplatform app targeting Android and iOS, with the UI shared via Compose Multiplatform. Package root: `de.shinz.rickandmortyshowcase`.
 
 **Screen-by-screen behaviour lives in [docs/SPEC.md](docs/SPEC.md) — read it before implementing a feature.**
+**Task order, dependency rationale and locked decisions live in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) — read it before starting any task.**
 
-The repo is currently a scaffold: `App.kt` is an empty composable, and the `Platform`/test classes are stubs. Most feature work means creating new structure rather than editing existing code.
+As of Task 0 the repo is a scaffold: `App.kt` is an empty composable and the `Platform`/test classes are stubs, so most feature work means creating new structure rather than editing existing code. The plan's checklist is the current state of play.
 
 ## Commands
 
 ```bash
 # Build / run
 ./gradlew :androidApp:assembleDebug
-./gradlew :androidApp:installDebug        # to a connected device/emulator
+./gradlew :androidApp:installDebug                  # to a connected device/emulator
+./gradlew :shared:compileKotlinIosSimulatorArm64    # fast iOS check without Xcode
 # iOS: open ./iosApp in Xcode and run (Gradle builds the Shared framework as a dependency)
 
 # Tests
@@ -23,7 +25,7 @@ The repo is currently a scaffold: `App.kt` is an empty composable, and the `Plat
 ./gradlew :shared:testAndroidHostTest                        # JVM/host tests (commonTest + androidHostTest)
 ./gradlew :shared:iosSimulatorArm64Test                      # iOS tests (commonTest + iosTest)
 ./gradlew :shared:testAndroidHostTest --tests "de.shinz.rickandmortyshowcase.SharedCommonTest"
-./gradlew :shared:connectedAndroidDeviceTest                 # instrumented, needs a device
+./gradlew :shared:connectedAndroidDeviceTest                 # instrumented; no device tests exist yet
 
 # Lint / verification
 ./gradlew :androidApp:lint        # or lintFix to auto-apply safe suggestions
@@ -45,9 +47,12 @@ Gradle 9.8.0 via the wrapper, JDK 21 toolchain (auto-provisioned per `gradle/gra
 | Preferences | DataStore — theme mode |
 | Navigation | Compose Navigation, type-safe `@Serializable` routes |
 | Images | Coil |
-| Testing | JUnit5, AssertK, Turbine, `kotlinx-coroutines-test` |
+| Date/time | Platform formatters behind one `AppDateTimeManager` (`java.time` on Android, `NSDateFormatter` on iOS) |
+| Testing | `kotlin.test` (commonTest) + JUnit5 (androidHostTest), AssertK, Turbine, `kotlinx-coroutines-test` |
 
 **No versions here** — they belong in `gradle/libs.versions.toml`, and no dependency coordinate may be hardcoded in a `build.gradle.kts`.
+
+Several pinned versions are deliberately **not** the newest release, for reasons that are not guessable from the version numbers. `docs/IMPLEMENTATION_PLAN.md` records each choice and its reason — **do not bump a dependency without reading it first.**
 
 **The app is English only.** Every user-facing string is a Compose Resources entry (`Res.string.…`). No German in code, strings, comments, or UI.
 
@@ -74,9 +79,12 @@ Layout under `shared/src/commonMain/kotlin/de/shinz/rickandmortyshowcase/`:
 ```
 core/
     designsystem/      AppTheme, AppColors, AppSpacing, AppRadius, AppSize, AppBorder, AppTypography
-    domain/            Result, Error, DataError, Character, repository + data-source interfaces
-    data/              HttpClientFactory, safeCall helpers, DTOs, mappers, Ktor/Room data sources
+    domain/            Result, Error, DataError, Character, repository + data-source interfaces,
+                       and app-wide use cases (theme) that no single feature owns
+    data/              BASE_URL, HttpClientFactory, safeCall helpers, DTOs, mappers,
+                       Ktor/Room/DataStore data sources
     database/          @Database, entities, DAOs
+    format/            AppDateTimeManager + expect PlatformDateTimeFormatter
     ui/                UiText, ObserveAsEvents, toUiText() mappers
 di/
     AppModule.kt       appModule (grouped by feature) + coreDataModule, coreDatabaseModule
@@ -92,7 +100,7 @@ navigation/            Routes, AppNavHost, the Dashboard shell
 Three placement decisions and why:
 
 1. **There is no `features/dashboard/`.** The dashboard has no ViewModel — it is a `Scaffold` + `BottomNavigationBar` + nested `NavHost`. A screen without its own ViewModel is not a feature, so the shell lives in `navigation/`.
-2. **`Character`, the repository interface and the data-source interfaces live in `core/domain/`**, not in a feature. All three list/detail features consume them, and `core:domain` is defined as the home for shared domain models, repository interfaces, error types and `Result`.
+2. **`Character`, the repository interface and the data-source interfaces live in `core/domain/`**, not in a feature. All three list/detail features consume them, and `core:domain` is defined as the home for shared domain models, repository interfaces, error types and `Result`. The same applies to **app-wide use cases**: the theme use cases live in `core/domain/usecase/` because the composition root needs them and it is not a feature, so `features/shared/` would be the wrong home.
 3. **`App()` is the composition root, not a screen.** It reads the theme mode via `koinInject<ObserveThemeModeUseCase>()` + `collectAsStateWithLifecycle()` and wraps `AppNavHost` in `AppTheme`. This is the *only* sanctioned place a composable touches a use case directly — there is no screen state involved, and the six-piece MVI ceremony for a single enum is not worth it. **Do not copy this pattern into a screen.**
 
 ### Layering
@@ -101,7 +109,8 @@ Three placement decisions and why:
 
 - **A ViewModel depends on use cases, never on a repository**, DAO, DataStore or network client.
 - **A use case depends on repository/data-source interfaces only** — never on another use case, never on anything in `presentation`.
-- Promote shared code only on the second consumer: one feature → its own package; two features → `features/shared/`; app-wide → `core/`.
+- Promote shared code only on the second consumer: one feature → its own package; two features → `features/shared/`; app-wide → `core/`. The composition root counts as app-wide, not as a feature.
+- **Every layer may read `core/domain`** — including `core/designsystem`, which needs it to key styling off a domain enum.
 
 ### Navigation
 
@@ -138,7 +147,7 @@ Two mechanical traps:
 
 ## Conventions
 
-The `android-*` skills (`android-module-structure`, `android-presentation-mvi`, `android-data-layer`, `android-domain-usecases`, `android-di-koin`, `android-navigation`, `android-error-handling`, `android-compose-ui`, `android-testing`) are the authoritative source. **Load the relevant one before creating a ViewModel, repository, use case, DI module, route, screen or test.** What follows pins the project-level choices so they are not re-derived each session.
+The `android-*` skills (`android-module-structure`, `android-presentation-mvi`, `android-data-layer`, `android-domain-usecases`, `android-di-koin`, `android-navigation`, `android-error-handling`, `android-compose-ui`, `android-date-time-manager`, `android-testing`) are the authoritative source. **Load the relevant one before creating a ViewModel, repository, use case, DI module, route, screen or test.** What follows pins the project-level choices so they are not re-derived each session.
 
 ### MVI
 
@@ -162,7 +171,7 @@ The rules that actually get violated:
 - The ViewModel **never** holds a `MutableStateFlow<UiState>`. Only the assembler builds a `UiState`.
 - `assemble(data, vmState)` is pure: no `suspend`, no `Flow`, no coroutine, no repository, no use case, no `SavedStateHandle`. Only synchronous pure formatters may be constructor dependencies.
 - Wiring: `combine(useCase(), vmState, assembler::assemble).stateIn(viewModelScope, SharingStarted.Eagerly, assembler.assemble(<X>Data.EMPTY, <X>ViewModelState()))`. Use `Eagerly` by default.
-- Events use `Channel` + `receiveAsFlow()` and are emitted by the ViewModel directly. **Events are not assembled** — error → `UiText` mapping happens at emission.
+- Events use `Channel` + `receiveAsFlow()` and are emitted by the ViewModel directly. **Events are not assembled** — for an *event*, error → `UiText` mapping happens at emission. An error that is part of rendered state (a retryable error state) is held as `DataError?` in `ViewModelState` and mapped by the assembler instead.
 - `ObserveAsEvents(viewModel.events) { … }` is called in the **Root** only. The Root holds the ViewModel and the navigation callbacks; `Screen` takes only `uiState` and `onAction`.
 - The composable decides nothing. The test is: *does the choice depend on data?* If yes, it belongs in the assembler. Static labels with no data dependency stay `stringResource(...)` in the composable.
 
@@ -210,7 +219,7 @@ In `core/ui/`. Note the variant is `StringResourceText` and `args` is a `List`. 
 
 ### Koin
 
-`appModule` in `di/` registers everything, **grouped by feature with a comment per group** — a flat list wiring four features is unreadable. `coreDataModule` and `coreDatabaseModule` cover core. Assembled in `startKoin { }` from the app entry point.
+`appModule` in `di/` registers everything, **grouped by feature with a comment per group** — a flat list wiring four features is unreadable. `coreDataModule` and `coreDatabaseModule` cover core. Assembly lives in a shared `initKoin()` in `di/` that both hosts call — iOS has no `Application` class, so `startKoin { }` cannot live in the Android app module.
 
 Prefer the constructor-reference overloads `singleOf` / `viewModelOf` / `factoryOf`; fall back to `single { }` / `viewModel { }` / `factory { }` only when constructor injection is not enough (a factory method, a qualified dependency, post-construction setup).
 
@@ -233,9 +242,16 @@ List definitions bottom-up: **use cases → assembler → ViewModel**. Inject Vi
 
 ### Testing
 
-JUnit5 (`@BeforeEach` / `@AfterEach`), AssertK, Turbine, `kotlinx-coroutines-test`. There is no dispatcher rule — set and reset manually: `Dispatchers.setMain(UnconfinedTestDispatcher())` / `Dispatchers.resetMain()`.
+AssertK, Turbine and `kotlinx-coroutines-test` everywhere; JUnit5 where the test is JVM-only. Tests are named `<Subject>Test` and sit in the **same package as their subject**, so each test source set mirrors the production package tree exactly — same-package tests can reach `internal` declarations, and a mirrored tree is what keeps that working.
 
-Tests live in `shared/src/androidHostTest/` **mirroring the production package tree exactly**, named `<Subject>Test`. Same-package tests can reach `internal` declarations; a mirrored tree is what keeps that working.
+The suite is **split by what the test needs**, because JUnit5 is JVM-only and tests placed only in `androidHostTest` would leave `:shared:iosSimulatorArm64Test` green with zero tests:
+
+| Source set | Holds | Framework |
+|---|---|---|
+| `shared/src/commonTest/` | Pure logic: `Result` helpers, DTO/entity mappers, **assemblers**, pure use cases | `kotlin.test` annotations + AssertK + Turbine — runs on **both** platforms |
+| `shared/src/androidHostTest/` | ViewModel tests, and anything needing a JVM-only API | JUnit5 (`@BeforeEach`/`@AfterEach`, `@RegisterExtension`) |
+
+Assemblers are the highest-value tests in the codebase and are pure, so they belong in `commonTest` where iOS runs them too. For ViewModel tests, drive the main dispatcher with a reusable JUnit5 extension (`@JvmField @RegisterExtension`) that does `Dispatchers.setMain(UnconfinedTestDispatcher())` / `resetMain()` — there is no dispatcher rule in the skills, so the extension is ours.
 
 - **Assembler tests** are the cheapest and highest-value: no coroutines, no fakes, no `runTest` — inputs and an expected `UiState`, one test per branch.
 - **Use case tests** cover orchestration, rollback and failure paths. Trivial pass-throughs need none — the ViewModel test covers them.
@@ -248,26 +264,38 @@ Tests live in `shared/src/androidHostTest/` **mirroring the production package t
 Implementation proceeds in small, logically self-contained tasks — one feature slice, one layer, or one infrastructure concern each. Per task:
 
 1. **Implement** the task.
-2. **Independent code review.** A *separate* agent reviews the diff against the `android-*` skills and these conventions. Fix what it finds.
-3. **Independent verification on both platforms.** A *separate* agent runs the app and exercises the real UI and functionality — not just the build:
-   - Android: `./gradlew :androidApp:installDebug`, then drive the emulator via `~/Library/Android/sdk/platform-tools/adb`.
-   - iOS: build and run the `iosApp` scheme on an iPhone simulator (`xcodebuild` / `xcrun simctl`) and exercise the same flows.
-   - Tests: `./gradlew :shared:testAndroidHostTest :shared:iosSimulatorArm64Test`
-4. **Commit** — one commit per completed task, only after review and both-platform verification pass.
+2. **Independent code review.** A *separate* agent reviews the diff against the `android-*` skills, this file **and `docs/IMPLEMENTATION_PLAN.md`** — the plan records conventions this app needs deliberately, and a reviewer who has not read it will flag them every single task. Fix what it finds.
+3. **Verification, in two tiers.** Both tiers always run:
+   ```bash
+   ./gradlew :androidApp:assembleDebug
+   ./gradlew :shared:compileKotlinIosSimulatorArm64
+   ./gradlew :shared:testAndroidHostTest :shared:iosSimulatorArm64Test
+   ```
+   For foundation tasks that render no UI, that is the whole check and the implementing session runs it. Once a task produces navigable UI, a *separate* agent additionally runs and **operates** the app on both platforms — `:androidApp:installDebug` plus `adb` on the emulator, and the `iosApp` scheme on an iPhone simulator via `xcodebuild` / `xcrun simctl`. `docs/IMPLEMENTATION_PLAN.md` marks where that boundary falls.
+4. **Commit** — one commit per completed task, only after review and both-platform verification pass. The commit includes **ticking that task's checkbox** in `docs/IMPLEMENTATION_PLAN.md`, so `git log` and the checklist can never disagree.
+5. **Clear the context.** The next task starts from a fresh context.
 
-Review and verification are done by **independent agents**, not by the session that wrote the code.
+Review and the operate-the-app verification are done by **independent agents**, not by the session that wrote the code.
 
-## Open points the skills do not cover
+Because the context is cleared between tasks, a task must be resumable from the repo alone. `docs/IMPLEMENTATION_PLAN.md` is that handoff: it carries the task checklist with the skills each task needs, the dependency rationale, the locked decisions and the sanctioned conventions. Begin every task by reading, in order, `CLAUDE.md` → `docs/SPEC.md` → `docs/IMPLEMENTATION_PLAN.md` → the skills that task names. Record any new decision in the plan rather than relying on it being remembered.
 
-Decide these when first needed; do not assume a skill prescribes an answer.
+## Gaps in the skills
 
-1. **`ObserveAsEvents` has no definition in any skill** — only a call site and a stated home (`core/ui/`). We write it ourselves.
-2. **Room on KMP is not covered.** Needs `@ConstructedBy` + `RoomDatabaseConstructor`, `BundledSQLiteDriver`, an `expect`/`actual` database builder, and per-target KSP.
-3. **DataStore has no conventions** — no key naming, no `Preferences`-vs-typed guidance.
-4. **`constructRoute` in the error-handling skill reads `BuildConfig.BASE_URL`, which does not exist in `commonMain`.** Use a plain `const val BASE_URL` in `core/data/` — this is a public API with no secret.
-5. **JUnit5 needs `useJUnitPlatform()`** wiring for `androidHostTest`; the catalog currently has only `kotlin-test`.
+The skills leave these unanswered. Most now have a recorded answer in `docs/IMPLEMENTATION_PLAN.md` — **check there before deciding anything here.**
+
+**Answered in the plan — do not re-decide:**
+
+1. **`ObserveAsEvents`** has no definition in any skill, only a call site and a stated home (`core/ui/`). The plan names a working implementation to mirror.
+2. **Room on KMP** is covered by no skill. The plan has the full wiring: `@ConstructedBy` + `RoomDatabaseConstructor`, `BundledSQLiteDriver`, per-target KSP, and the two silent-failure traps.
+3. **JUnit5 on `androidHostTest`** needs `useJUnitPlatform()` applied to the task, and `junit-platform-launcher` declared explicitly under Gradle 9. Both are in the plan; without them tests are skipped and the build still passes.
+4. **The navigation artifact and version** are locked in the plan — a beta, deliberately, because the stable release conflicts with our lifecycle version. Not a free choice.
+
+**Still genuinely open:**
+
+5. **DataStore has no conventions** in any skill — no key naming, no `Preferences`-vs-typed guidance.
 6. **`.dataOrNull()`** appears in a skill example but is not among the four defined `Result` helpers — add it deliberately or avoid it.
-7. **No skill names a navigation artifact or version.** The *pattern* is type-safe `@Serializable` routes; the coordinate is the version catalog's business.
+
+Settled, and recorded here because the skills point the wrong way: the error-handling skill's `constructRoute` reads `BuildConfig.BASE_URL`, which does not exist in `commonMain` — this project uses a plain `const val BASE_URL` in `core/data/`, which is safe because the API is public and has no secret.
 
 ## Git
 
