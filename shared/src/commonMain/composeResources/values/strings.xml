@@ -46,6 +46,18 @@
     <string name="favorite_remove_message">%1$s will no longer be saved for offline viewing.</string>
 
     <!--
+      The detail screen's field labels. Static, one per row of the field list —
+      only the values are data. "Last known location" is the API's own framing:
+      a character's location is where they were last seen, not where they are.
+    -->
+    <string name="detail_type">Type</string>
+    <string name="detail_gender">Gender</string>
+    <string name="detail_origin">Origin</string>
+    <string name="detail_location">Last known location</string>
+    <string name="detail_episodes">Episodes</string>
+    <string name="detail_created">Added to the API</string>
+
+    <!--
       Error messages, one per reachable DataError constant.
 
       Each says what happened and, where the user can do something, what. None

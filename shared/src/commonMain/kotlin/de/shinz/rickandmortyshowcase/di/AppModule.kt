@@ -1,6 +1,8 @@
 package de.shinz.rickandmortyshowcase.di
 
 import de.shinz.rickandmortyshowcase.features.characterdetail.domain.usecase.GetCharacterUseCase
+import de.shinz.rickandmortyshowcase.features.characterdetail.presentation.CharacterDetailViewModel
+import de.shinz.rickandmortyshowcase.features.characterdetail.presentation.assembler.CharacterDetailUiStateAssembler
 import de.shinz.rickandmortyshowcase.features.characterlist.domain.usecase.GetCharacterPageUseCase
 import de.shinz.rickandmortyshowcase.features.characterlist.presentation.CharacterListViewModel
 import de.shinz.rickandmortyshowcase.features.characterlist.presentation.assembler.CharacterListUiStateAssembler
@@ -9,6 +11,7 @@ import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.ObserveFavor
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.RemoveFavoriteUseCase
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
@@ -32,6 +35,12 @@ val appModule: Module = module {
 
     // characterdetail
     factoryOf(::GetCharacterUseCase)
+    factoryOf(::CharacterDetailUiStateAssembler)
+    // Not `viewModelOf`: the character id comes from the route, which the Root
+    // decodes and passes through `parametersOf`.
+    viewModel { (characterId: Int) ->
+        CharacterDetailViewModel(characterId, get(), get(), get(), get(), get())
+    }
 
     // characterlist
     factoryOf(::GetCharacterPageUseCase)

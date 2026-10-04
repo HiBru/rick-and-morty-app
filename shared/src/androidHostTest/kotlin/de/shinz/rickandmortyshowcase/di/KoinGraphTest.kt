@@ -12,6 +12,7 @@ import de.shinz.rickandmortyshowcase.core.domain.usecase.SetThemeModeUseCase
 import de.shinz.rickandmortyshowcase.core.format.AppDateTimeManager
 import de.shinz.rickandmortyshowcase.core.ui.AppImageLoaderFactory
 import de.shinz.rickandmortyshowcase.features.characterdetail.domain.usecase.GetCharacterUseCase
+import de.shinz.rickandmortyshowcase.features.characterdetail.presentation.assembler.CharacterDetailUiStateAssembler
 import de.shinz.rickandmortyshowcase.features.characterlist.domain.usecase.GetCharacterPageUseCase
 import de.shinz.rickandmortyshowcase.features.characterlist.presentation.assembler.CharacterListUiStateAssembler
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.AddFavoriteUseCase
@@ -41,6 +42,11 @@ import kotlin.time.Clock
  *
  * **ViewModels are deliberately not resolved here**, even though a `viewModelOf`
  * arity mistake is exactly the runtime failure this file exists to catch.
+ * `CharacterDetailViewModel` has a second reason: it is bound with
+ * `viewModel { (characterId: Int) -> … }`, so resolving it needs a
+ * `parametersOf` the graph test has no reason to supply. **Every other binding a
+ * ViewModel's constructor names is resolved individually below** — including
+ * both assemblers — which is what keeps the omission from being a hole.
  * Resolving one *constructs* it, and `CharacterListViewModel` requests its first
  * page from `init` — so the graph test would fire a real HTTP request and leave a
  * live `viewModelScope` running past `Dispatchers.resetMain()`, whose uncaught
@@ -89,7 +95,7 @@ class KoinGraphTest {
         koin.get<CharacterRepository>()
 
         // Domain — the theme pair the composition root needs, and the formatter
-        // the detail assembler will take as a constructor dependency.
+        // the detail assembler takes as a constructor dependency.
         koin.get<ThemePreferencesLocalDataSource>()
         koin.get<ObserveThemeModeUseCase>()
         koin.get<SetThemeModeUseCase>()
@@ -102,6 +108,7 @@ class KoinGraphTest {
         koin.get<GetCharacterUseCase>()
         koin.get<GetCharacterPageUseCase>()
         koin.get<CharacterListUiStateAssembler>()
+        koin.get<CharacterDetailUiStateAssembler>()
         koin.get<ObserveFavoriteIdsUseCase>()
         koin.get<AddFavoriteUseCase>()
         koin.get<RemoveFavoriteUseCase>()
@@ -125,6 +132,8 @@ class KoinGraphTest {
         // Assemblers are factories too, per CLAUDE.md's scope table.
         assertThat(koin.get<CharacterListUiStateAssembler>())
             .isNotSameInstanceAs(koin.get<CharacterListUiStateAssembler>())
+        assertThat(koin.get<CharacterDetailUiStateAssembler>())
+            .isNotSameInstanceAs(koin.get<CharacterDetailUiStateAssembler>())
     }
 
     @Test

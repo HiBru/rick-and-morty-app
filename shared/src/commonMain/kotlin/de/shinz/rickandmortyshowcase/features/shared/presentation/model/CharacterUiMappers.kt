@@ -30,7 +30,7 @@ fun Character.toCharacterUi(isFavorite: Boolean): CharacterUi = CharacterUi(
     status = status,
     subtitle = UiText.Joined(
         listOf(
-            UiText.StringResourceText(status.labelResource()),
+            UiText.StringResourceText(status.statusLabel()),
             // Not a resource: the API's own wording, unbounded and untranslated.
             // Blank for a handful of characters, which is exactly the case
             // UiText.Joined drops along with its separator.
@@ -38,21 +38,32 @@ fun Character.toCharacterUi(isFavorite: Boolean): CharacterUi = CharacterUi(
         ),
     ),
     isFavorite = isFavorite,
-    favoriteContentDescription = UiText.StringResourceText(
-        id = if (isFavorite) Res.string.cd_remove_favorite else Res.string.cd_add_favorite,
-        // Named, so a list does not read as twenty identical buttons.
-        args = listOf(name),
-    ),
+    favoriteContentDescription = favoriteContentDescription(name, isFavorite),
 )
+
+/**
+ * What a screen reader announces for a favourite button.
+ *
+ * Shared by the row and the detail screen rather than written twice: the two
+ * screens offer the same control, and a11y text that drifts between them is the
+ * kind of defect nobody sees. Named, so a list does not read as twenty identical
+ * buttons.
+ */
+fun favoriteContentDescription(name: String, isFavorite: Boolean): UiText =
+    UiText.StringResourceText(
+        id = if (isFavorite) Res.string.cd_remove_favorite else Res.string.cd_add_favorite,
+        args = listOf(name),
+    )
 
 /**
  * The word for a status.
  *
- * Private and separate from `AppStatusDot`'s colour mapping on purpose: the two
- * live in different layers because one produces text and the other a token, and
- * neither can do the other's job.
+ * Separate from `AppStatusDot`'s colour mapping on purpose: the two live in
+ * different layers because one produces text and the other a token, and neither
+ * can do the other's job. Shared with the detail screen, which shows the same
+ * "Alive · Human" line under the character's name.
  */
-private fun CharacterStatus.labelResource(): StringResource = when (this) {
+fun CharacterStatus.statusLabel(): StringResource = when (this) {
     CharacterStatus.ALIVE -> Res.string.status_alive
     CharacterStatus.DEAD -> Res.string.status_dead
     CharacterStatus.UNKNOWN -> Res.string.status_unknown
