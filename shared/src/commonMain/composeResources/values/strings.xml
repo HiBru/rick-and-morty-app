@@ -49,6 +49,14 @@
     <string name="favorite_remove_message">%1$s will no longer be saved for offline viewing.</string>
 
     <!--
+      The Favorites empty state. It says what to do, not just what is missing —
+      an empty screen that only announces its emptiness leaves the user to guess
+      where favourites come from.
+    -->
+    <string name="favorites_empty_title">No favorites yet</string>
+    <string name="favorites_empty_description">Tap the heart on any character to keep them here, ready to read offline.</string>
+
+    <!--
       The detail screen's field labels. Static, one per row of the field list —
       only the values are data. "Last known location" is the API's own framing:
       a character's location is where they were last seen, not where they are.

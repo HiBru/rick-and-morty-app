@@ -53,6 +53,14 @@ class FakeFavoriteCharacterLocalDataSource : FavoriteCharacterLocalDataSource {
     var getFavoriteCallCount: Int = 0
         private set
 
+    /**
+     * Counts deletes, which is the only way to tell "removed once" from
+     * "removed twice" — removing an absent id is a documented no-op, so the
+     * stored contents look identical either way.
+     */
+    var removeFavoriteCallCount: Int = 0
+        private set
+
     /** Current contents, newest favourited **last** — for assertions. */
     val stored: List<Character> get() = entries.value
 
@@ -95,6 +103,7 @@ class FakeFavoriteCharacterLocalDataSource : FavoriteCharacterLocalDataSource {
     }
 
     override suspend fun removeFavorite(id: Int): EmptyResult<DataError.Local> {
+        removeFavoriteCallCount++
         writeError?.let { return Result.Error(it) }
         entries.value = entries.value.filterNot { it.id == id }
 

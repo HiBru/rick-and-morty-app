@@ -22,6 +22,7 @@ import androidx.navigation.toRoute
 import de.shinz.rickandmortyshowcase.core.designsystem.theme.AppTheme
 import de.shinz.rickandmortyshowcase.features.characterdetail.presentation.CharacterDetailRoot
 import de.shinz.rickandmortyshowcase.features.characterlist.presentation.CharacterListRoot
+import de.shinz.rickandmortyshowcase.features.favorites.presentation.FavoritesRoot
 
 /**
  * The outer host: the dashboard, and the detail screen that covers it.
@@ -115,12 +116,10 @@ private fun DashboardScreen(
                 )
             }
             composable<FavoritesRoute> {
-                PlaceholderScreen(
-                    title = "Favorites",
-                    replacedBy = "Task 20",
+                FavoritesRoot(
                     contentPadding = innerPadding,
                     // The same destination as from Home, per SPEC.
-                    onRowClick = onNavigateToDetail,
+                    onNavigateToDetail = onNavigateToDetail,
                 )
             }
             composable<SettingsRoute> {

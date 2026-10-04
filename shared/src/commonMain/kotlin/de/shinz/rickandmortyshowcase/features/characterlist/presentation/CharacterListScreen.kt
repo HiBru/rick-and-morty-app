@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,6 +33,7 @@ import de.shinz.rickandmortyshowcase.core.designsystem.components.AppConfirmDial
 import de.shinz.rickandmortyshowcase.core.designsystem.components.AppErrorState
 import de.shinz.rickandmortyshowcase.core.designsystem.components.AppLoadingIndicator
 import de.shinz.rickandmortyshowcase.core.designsystem.components.AppSnackbarHost
+import de.shinz.rickandmortyshowcase.core.designsystem.plus
 import de.shinz.rickandmortyshowcase.core.designsystem.theme.AppTheme
 import de.shinz.rickandmortyshowcase.core.ui.ObserveAsEvents
 import de.shinz.rickandmortyshowcase.core.ui.resolve
@@ -167,6 +166,7 @@ private fun CharacterList(
         // The window insets arrive as *content* padding, so rows scroll under
         // the status and navigation bars instead of stopping short of them.
         contentPadding = contentPadding.plus(
+            direction = LocalLayoutDirection.current,
             horizontal = spacing.screenPadding,
             vertical = spacing.md,
         ),
@@ -275,28 +275,6 @@ private fun NextPageError(
             Text(text = stringResource(Res.string.action_retry), color = AppTheme.colors.accent)
         }
     }
-}
-
-/**
- * Adds a uniform inset to window insets that already arrived as padding.
- *
- * `PaddingValues` has no `plus`, and the two cannot simply be swapped: the
- * horizontal gutter is the screen's, the vertical and the cutout insets are the
- * window's, and the list needs both at once.
- */
-@Composable
-private fun PaddingValues.plus(
-    horizontal: androidx.compose.ui.unit.Dp,
-    vertical: androidx.compose.ui.unit.Dp,
-): PaddingValues {
-    val direction = LocalLayoutDirection.current
-
-    return PaddingValues(
-        start = calculateStartPadding(direction) + horizontal,
-        end = calculateEndPadding(direction) + horizontal,
-        top = calculateTopPadding() + vertical,
-        bottom = calculateBottomPadding() + vertical,
-    )
 }
 
 /**

@@ -6,6 +6,9 @@ import de.shinz.rickandmortyshowcase.features.characterdetail.presentation.assem
 import de.shinz.rickandmortyshowcase.features.characterlist.domain.usecase.GetCharacterPageUseCase
 import de.shinz.rickandmortyshowcase.features.characterlist.presentation.CharacterListViewModel
 import de.shinz.rickandmortyshowcase.features.characterlist.presentation.assembler.CharacterListUiStateAssembler
+import de.shinz.rickandmortyshowcase.features.favorites.domain.usecase.ObserveFavoritesUseCase
+import de.shinz.rickandmortyshowcase.features.favorites.presentation.FavoritesViewModel
+import de.shinz.rickandmortyshowcase.features.favorites.presentation.assembler.FavoritesUiStateAssembler
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.AddFavoriteUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.ObserveFavoriteIdsUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.RemoveFavoriteUseCase
@@ -46,7 +49,10 @@ val appModule: Module = module {
     factoryOf(::GetCharacterPageUseCase)
     factoryOf(::CharacterListUiStateAssembler)
     viewModelOf(::CharacterListViewModel)
-    // favorites — Task 20
+    // favorites
+    factoryOf(::ObserveFavoritesUseCase)
+    factoryOf(::FavoritesUiStateAssembler)
+    viewModelOf(::FavoritesViewModel)
     // settings — Task 21 (its use cases live in coreDataStoreModule, since the
     // composition root needs them too)
 }
