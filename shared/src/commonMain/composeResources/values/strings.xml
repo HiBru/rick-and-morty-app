@@ -5,6 +5,11 @@
     <string name="action_retry">Retry</string>
     <string name="action_cancel">Cancel</string>
 
+    <!-- Bottom navigation. The real screens reuse these as their titles. -->
+    <string name="nav_home">Home</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="nav_settings">Settings</string>
+
     <!--
       Error messages, one per reachable DataError constant.
 
