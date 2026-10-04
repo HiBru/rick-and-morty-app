@@ -38,6 +38,16 @@ import kotlin.time.Clock
  *
  * Everything except two `Context`-bound leaves is the real wiring — see
  * `platformStubsForHostTest`.
+ *
+ * **ViewModels are deliberately not resolved here**, even though a `viewModelOf`
+ * arity mistake is exactly the runtime failure this file exists to catch.
+ * Resolving one *constructs* it, and `CharacterListViewModel` requests its first
+ * page from `init` — so the graph test would fire a real HTTP request and leave a
+ * live `viewModelScope` running past `Dispatchers.resetMain()`, whose uncaught
+ * exception then lands on whichever test happens to run next. (Measured: it
+ * failed an unrelated use-case test in another package.) What makes the omission
+ * acceptable is that `viewModelOf(::X)` resolves each constructor parameter *by
+ * type*, and every one of those types is resolved individually above.
  */
 class KoinGraphTest {
 

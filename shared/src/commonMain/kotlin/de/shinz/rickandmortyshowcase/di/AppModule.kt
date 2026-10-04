@@ -2,12 +2,14 @@ package de.shinz.rickandmortyshowcase.di
 
 import de.shinz.rickandmortyshowcase.features.characterdetail.domain.usecase.GetCharacterUseCase
 import de.shinz.rickandmortyshowcase.features.characterlist.domain.usecase.GetCharacterPageUseCase
+import de.shinz.rickandmortyshowcase.features.characterlist.presentation.CharacterListViewModel
 import de.shinz.rickandmortyshowcase.features.characterlist.presentation.assembler.CharacterListUiStateAssembler
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.AddFavoriteUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.ObserveFavoriteIdsUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.RemoveFavoriteUseCase
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 /**
@@ -34,7 +36,7 @@ val appModule: Module = module {
     // characterlist
     factoryOf(::GetCharacterPageUseCase)
     factoryOf(::CharacterListUiStateAssembler)
-    // ViewModel — Task 16
+    viewModelOf(::CharacterListViewModel)
     // favorites — Task 20
     // settings — Task 21 (its use cases live in coreDataStoreModule, since the
     // composition root needs them too)
