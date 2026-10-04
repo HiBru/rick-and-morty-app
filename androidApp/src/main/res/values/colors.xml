@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AppColors.background, light. Kept in sync with Color.kt by hand. -->
+    <color name="window_background">#FAFAFA</color>
+</resources>

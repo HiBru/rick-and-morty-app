@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Screen-by-screen behaviour lives in [docs/SPEC.md](docs/SPEC.md) — read it before implementing a feature.**
 **Task order, dependency rationale and locked decisions live in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) — read it before starting any task.**
 
-The app is still being built out: `App.kt` is an empty composable, so most feature work means creating new structure rather than editing existing code. **The plan's checklist is the current state of play** — the first unticked box is what's next.
+The app is still being built out: the data layer and DI are wired, and `App()` renders a themed placeholder until the navigation shell lands. Most feature work means creating new structure rather than editing existing code. **The plan's checklist is the current state of play** — the first unticked box is what's next.
 
 ## Commands
 

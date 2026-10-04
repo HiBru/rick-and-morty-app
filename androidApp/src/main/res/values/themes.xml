@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      The cold-start window theme, before Compose draws anything.
+
+      One style, with windowBackground resolved per mode from values-night/colors.xml
+      — a night *theme* variant would be inert, since the only item it could change
+      is already night-qualified.
+
+      windowBackground is AppColors.background, which App()'s Surface also uses, so
+      the launch window and the first frame are the same colour. The two values are
+      hand-synced with Color.kt; there is no way to share them.
+
+      Caveat: the -night qualifier only selects from API 29. Below that nothing sets
+      UI_MODE_NIGHT_YES without AppCompat, so on API 26-28 the launch window is
+      always light even when the app renders dark.
+
+      Parented on the platform theme rather than AppCompat: nothing here needs
+      AppCompat, and adding it back as a dependency for one attribute is not worth it.
+    -->
+    <style name="Theme.RickAndMortyShowcase" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>

@@ -54,6 +54,7 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
+            implementation(libs.androidx.core.ktx)
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp)
         }
