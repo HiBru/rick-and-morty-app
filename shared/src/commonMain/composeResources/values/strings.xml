@@ -11,6 +11,27 @@
     <string name="nav_settings">Settings</string>
 
     <!--
+      Character status, as every row and the detail screen label it. The API's
+      own words, capitalised: it sends "Alive", "Dead" and "unknown".
+    -->
+    <string name="status_alive">Alive</string>
+    <string name="status_dead">Dead</string>
+    <string name="status_unknown">Unknown</string>
+
+    <!--
+      The favourite button's description. Data-dependent — which of the two, and
+      whose name goes in it — so an assembler picks it and the composable only
+      resolves it.
+
+      The name is interpolated so a list does not read as twenty identical "Add
+      to favorites" buttons. The placeholder is indexed (%1$s) and must stay
+      that way: Compose Resources substitutes only indexed placeholders, and a
+      bare %s is emitted literally with no error.
+    -->
+    <string name="cd_add_favorite">Add %1$s to favorites</string>
+    <string name="cd_remove_favorite">Remove %1$s from favorites</string>
+
+    <!--
       Error messages, one per reachable DataError constant.
 
       Each says what happened and, where the user can do something, what. None

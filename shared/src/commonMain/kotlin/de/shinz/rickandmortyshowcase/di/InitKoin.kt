@@ -26,6 +26,7 @@ fun initKoin(config: KoinAppDeclaration? = null) {
             coreDataModule,
             coreDatabaseModule,
             coreDataStoreModule,
+            coreUiModule,
 
             // features
             appModule,

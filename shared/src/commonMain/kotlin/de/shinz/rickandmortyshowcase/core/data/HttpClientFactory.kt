@@ -67,7 +67,37 @@ object HttpClientFactory {
         }
     }
 
+    /**
+     * The client Coil fetches character portraits with.
+     *
+     * A second client over the **same engine**, which is the split that matters:
+     * sharing the engine shares the connection pool, sharing the *client* would
+     * hand every image request the `ContentNegotiation` plugin above — and with
+     * it an `Accept: application/json` header that a CDN has no reason to
+     * honour. An image response is bytes; there is nothing to negotiate, nothing
+     * to deserialize, and no status table to map, which is what the rest of
+     * [create]'s configuration exists for.
+     *
+     * It lives here rather than beside the Coil wiring so that both of the app's
+     * timeout sets sit in one file. They were duplicated across two files at
+     * first, with different values and nothing linking them.
+     */
+    fun createForImages(engine: HttpClientEngine): HttpClient = HttpClient(engine) {
+        install(HttpTimeout) {
+            connectTimeoutMillis = CONNECT_TIMEOUT_MILLIS
+            socketTimeoutMillis = IMAGE_SOCKET_TIMEOUT_MILLIS
+            requestTimeoutMillis = IMAGE_REQUEST_TIMEOUT_MILLIS
+        }
+    }
+
     private const val CONNECT_TIMEOUT_MILLIS = 10_000L
     private const val SOCKET_TIMEOUT_MILLIS = 10_000L
     private const val REQUEST_TIMEOUT_MILLIS = 20_000L
+
+    // Longer than the API's, and only on the two that bound a transfer: a
+    // portrait is two orders of magnitude larger than a page of JSON, so a slow
+    // connection should degrade to a late image rather than to no image. The
+    // connect timeout is shared — reaching the host is the same problem for both.
+    private const val IMAGE_SOCKET_TIMEOUT_MILLIS = 15_000L
+    private const val IMAGE_REQUEST_TIMEOUT_MILLIS = 30_000L
 }

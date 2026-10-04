@@ -1,6 +1,7 @@
 package de.shinz.rickandmortyshowcase.core.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.key
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -15,7 +16,23 @@ import org.jetbrains.compose.resources.stringResource
  * Use it for anything resource-backed or localisable. Values that are always
  * dynamic and never come from a resource — a character's name, a species
  * straight from the API — stay plain `String` in the `UiState`.
+ *
+ * ### Why `@Immutable`
+ *
+ * Two variants hold a `List`, which the Compose compiler cannot prove stable —
+ * so without this annotation every type with a `UiText` field is *inferred*
+ * unstable, and under strong skipping an unstable parameter is compared by
+ * **instance identity** rather than `equals`. A `CharacterUi` rebuilt by an
+ * assembler on each emission is never the same instance, so every row of a
+ * paginated list would recompose on every unrelated state change. Measured with
+ * the Compose compiler's stability report in Task 13: `CharacterListItem` had an
+ * unstable `character` parameter purely because of these two fields.
+ *
+ * The promise is honest — all three variants are `data class`es whose lists are
+ * built once at the call site and never mutated — but it *is* a promise, so
+ * nothing may ever put a mutable value into [StringResourceText.args].
  */
+@Immutable
 sealed interface UiText {
 
     /** Always-dynamic text that never comes from a resource. */
