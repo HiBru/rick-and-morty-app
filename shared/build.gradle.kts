@@ -11,6 +11,14 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        // expect/actual *classes* are still flagged Beta (KT-61573) even though
+        // they are the shape the platform-seam pattern needs — an expect fun
+        // cannot hold a formatter built once. Opting in rather than living with
+        // the warning on every build.
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
