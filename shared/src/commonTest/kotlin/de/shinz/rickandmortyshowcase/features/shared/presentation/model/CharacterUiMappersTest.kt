@@ -8,6 +8,7 @@ import assertk.assertions.prop
 import de.shinz.rickandmortyshowcase.core.domain.model.CharacterStatus
 import de.shinz.rickandmortyshowcase.core.domain.model.testCharacter
 import de.shinz.rickandmortyshowcase.core.ui.UiText
+import de.shinz.rickandmortyshowcase.core.ui.describe
 import kotlin.test.Test
 
 class CharacterUiMappersTest {
@@ -107,20 +108,4 @@ class CharacterUiMappersTest {
         assertThat((favorite.favoriteContentDescription as UiText.StringResourceText).args)
             .containsExactly("Rick Sanchez")
     }
-}
-
-/**
- * A `UiText` as a comparable string.
- *
- * The resource *key* rather than the `StringResource` itself, because that class
- * has no `toString()` — a mismatch would otherwise be reported as
- * `StringResource@1a2b` instead of a name. Resolved *text* is not asserted
- * anywhere here on purpose: `getString` needs `Resources.getSystem()` on the
- * JVM, so a common test cannot reach it. `ErrorStringsTest` in `iosTest` is
- * where resource wording is checked.
- */
-private fun UiText.describe(): String = when (this) {
-    is UiText.StringResourceText -> "res:${id.key}"
-    is UiText.DynamicString -> "dyn:$value"
-    is UiText.Joined -> parts.joinToString(separator) { it.describe() }
 }

@@ -13,6 +13,7 @@ import de.shinz.rickandmortyshowcase.core.domain.model.CharacterStatus
 import de.shinz.rickandmortyshowcase.core.domain.model.testCharacter
 import de.shinz.rickandmortyshowcase.core.format.AppDateTimeManager
 import de.shinz.rickandmortyshowcase.core.ui.UiText
+import de.shinz.rickandmortyshowcase.core.ui.describe
 import de.shinz.rickandmortyshowcase.core.ui.toUiText
 import de.shinz.rickandmortyshowcase.features.characterdetail.domain.model.CharacterDetailData
 import de.shinz.rickandmortyshowcase.features.characterdetail.presentation.model.CharacterDetailFieldUi
@@ -234,10 +235,4 @@ class CharacterDetailUiStateAssemblerTest {
 
         assertThat(uiState).prop(CharacterDetailUiState::removeDialogText).isNull()
     }
-}
-
-private fun UiText.describe(): String = when (this) {
-    is UiText.StringResourceText -> "res:${id.key}"
-    is UiText.DynamicString -> "dyn:$value"
-    is UiText.Joined -> parts.joinToString(separator) { it.describe() }
 }

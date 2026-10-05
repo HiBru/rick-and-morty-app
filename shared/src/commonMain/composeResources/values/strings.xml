@@ -16,6 +16,16 @@
     <string name="cd_navigate_back">Back</string>
 
     <!--
+      The settings screen. "Appearance" rather than "Theme" as the section
+      heading, because the options below it include System — which is not a
+      theme the user picked but a deferral to the device.
+    -->
+    <string name="settings_appearance">Appearance</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_system">Follow the device</string>
+
+    <!--
       Character status, as every row and the detail screen label it. The API's
       own words, capitalised: it sends "Alive", "Dead" and "unknown".
     -->

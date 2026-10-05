@@ -15,9 +15,10 @@ import androidx.compose.ui.unit.dp
  * needs both at once — the window's so content clears the status and navigation
  * bars, the screen's so it lines up with every other screen.
  *
- * Shared by both lists rather than reimplemented, which is the state it was in
- * after Task 20: token for token in two files, so a landscape or cutout fix to
- * one would silently miss the other.
+ * Shared rather than reimplemented, which is the state it was in after Task 20:
+ * token for token in two files, so a landscape or cutout fix to one would
+ * silently miss the other. Three callers now — both lists and the settings
+ * screen, which is not a list but wants the same arithmetic.
  *
  * Not `@Composable`, so [direction] is a parameter and this is unit-testable.
  */

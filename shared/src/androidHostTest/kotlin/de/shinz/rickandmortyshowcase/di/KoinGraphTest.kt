@@ -17,6 +17,7 @@ import de.shinz.rickandmortyshowcase.features.characterlist.domain.usecase.GetCh
 import de.shinz.rickandmortyshowcase.features.characterlist.presentation.assembler.CharacterListUiStateAssembler
 import de.shinz.rickandmortyshowcase.features.favorites.domain.usecase.ObserveFavoritesUseCase
 import de.shinz.rickandmortyshowcase.features.favorites.presentation.assembler.FavoritesUiStateAssembler
+import de.shinz.rickandmortyshowcase.features.settings.presentation.assembler.SettingsUiStateAssembler
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.AddFavoriteUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.ObserveFavoriteIdsUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.RemoveFavoriteUseCase
@@ -113,6 +114,7 @@ class KoinGraphTest {
         koin.get<CharacterDetailUiStateAssembler>()
         koin.get<ObserveFavoritesUseCase>()
         koin.get<FavoritesUiStateAssembler>()
+        koin.get<SettingsUiStateAssembler>()
         koin.get<ObserveFavoriteIdsUseCase>()
         koin.get<AddFavoriteUseCase>()
         koin.get<RemoveFavoriteUseCase>()
@@ -140,6 +142,8 @@ class KoinGraphTest {
             .isNotSameInstanceAs(koin.get<CharacterDetailUiStateAssembler>())
         assertThat(koin.get<FavoritesUiStateAssembler>())
             .isNotSameInstanceAs(koin.get<FavoritesUiStateAssembler>())
+        assertThat(koin.get<SettingsUiStateAssembler>())
+            .isNotSameInstanceAs(koin.get<SettingsUiStateAssembler>())
     }
 
     @Test

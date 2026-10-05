@@ -9,6 +9,8 @@ import de.shinz.rickandmortyshowcase.features.characterlist.presentation.assembl
 import de.shinz.rickandmortyshowcase.features.favorites.domain.usecase.ObserveFavoritesUseCase
 import de.shinz.rickandmortyshowcase.features.favorites.presentation.FavoritesViewModel
 import de.shinz.rickandmortyshowcase.features.favorites.presentation.assembler.FavoritesUiStateAssembler
+import de.shinz.rickandmortyshowcase.features.settings.presentation.SettingsViewModel
+import de.shinz.rickandmortyshowcase.features.settings.presentation.assembler.SettingsUiStateAssembler
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.AddFavoriteUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.ObserveFavoriteIdsUseCase
 import de.shinz.rickandmortyshowcase.features.shared.domain.usecase.RemoveFavoriteUseCase
@@ -53,6 +55,8 @@ val appModule: Module = module {
     factoryOf(::ObserveFavoritesUseCase)
     factoryOf(::FavoritesUiStateAssembler)
     viewModelOf(::FavoritesViewModel)
-    // settings — Task 21 (its use cases live in coreDataStoreModule, since the
-    // composition root needs them too)
+    // settings — its use cases live in coreDataStoreModule, since the
+    // composition root needs them too
+    factoryOf(::SettingsUiStateAssembler)
+    viewModelOf(::SettingsViewModel)
 }

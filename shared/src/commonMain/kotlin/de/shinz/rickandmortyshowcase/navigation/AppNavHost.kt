@@ -23,6 +23,7 @@ import de.shinz.rickandmortyshowcase.core.designsystem.theme.AppTheme
 import de.shinz.rickandmortyshowcase.features.characterdetail.presentation.CharacterDetailRoot
 import de.shinz.rickandmortyshowcase.features.characterlist.presentation.CharacterListRoot
 import de.shinz.rickandmortyshowcase.features.favorites.presentation.FavoritesRoot
+import de.shinz.rickandmortyshowcase.features.settings.presentation.SettingsRoot
 
 /**
  * The outer host: the dashboard, and the detail screen that covers it.
@@ -123,11 +124,7 @@ private fun DashboardScreen(
                 )
             }
             composable<SettingsRoute> {
-                PlaceholderScreen(
-                    title = "Settings",
-                    replacedBy = "Task 21",
-                    contentPadding = innerPadding,
-                )
+                SettingsRoot(contentPadding = innerPadding)
             }
         }
     }
