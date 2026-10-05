@@ -23,12 +23,12 @@ internal class AppEmptyStatePreviewParameterProvider :
     override val values: Sequence<AppEmptyStatePreviewData> = sequenceOf(
         AppEmptyStatePreviewData(
             icon = Res.drawable.ic_favorite_border,
-            title = "No favourites yet",
+            title = "No favorites yet",
             description = "Tap the heart on any character to keep them here.",
         ),
         AppEmptyStatePreviewData(
             icon = Res.drawable.ic_favorite_border,
-            title = "No favourites yet",
+            title = "No favorites yet",
             description = "Tap the heart on any character to keep them here, " +
                 "even with no connection at all — the whole record is saved, " +
                 "not just the name.",

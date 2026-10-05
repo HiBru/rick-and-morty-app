@@ -69,7 +69,9 @@ class ThemePreferencesFallbackTest {
 
         DataStoreThemePreferencesLocalDataSource(store).observeThemeMode().test {
             assertThat(awaitItem()).isEqualTo(ThemeMode.SYSTEM)
-            awaitComplete()
+            // Degraded, not finished — see `degradeTo`.
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
         }
     }
 

@@ -53,8 +53,11 @@ sealed interface UiText {
      *
      * This exists because such a line mixes sources: a character's status is a
      * string resource, its species is whatever the API returned. An assembler can
-     * resolve neither, so it hands over both and lets composition do it. It is
-     * also how the detail screen omits `type`, which the API usually sends blank.
+     * resolve neither, so it hands over both and lets composition do it.
+     *
+     * It is *not* how the detail screen omits a blank `type`: that assembler
+     * drops the whole labelled row, which is a different mechanism for a
+     * similar-looking problem.
      */
     data class Joined(
         val parts: List<UiText>,

@@ -10,11 +10,9 @@ import de.shinz.rickandmortyshowcase.core.domain.EmptyResult
 import de.shinz.rickandmortyshowcase.core.domain.asEmptyResult
 import de.shinz.rickandmortyshowcase.core.domain.datasource.ThemePreferencesLocalDataSource
 import de.shinz.rickandmortyshowcase.core.domain.model.ThemeMode
+import de.shinz.rickandmortyshowcase.core.data.degradeTo
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retry
 
 /**
  * The theme preference in DataStore Preferences.
@@ -46,9 +44,7 @@ internal class DataStoreThemePreferencesLocalDataSource(
      */
     override fun observeThemeMode(): Flow<ThemeMode> = dataStore.data
         .map { preferences -> preferences[THEME_MODE_KEY].toThemeMode() }
-        .retry(TRANSIENT_RETRIES)
-        .catch { emit(ThemeMode.SYSTEM) }
-        .distinctUntilChanged()
+        .degradeTo(fallback = ThemeMode.SYSTEM, retries = TRANSIENT_RETRIES)
 
     override suspend fun setThemeMode(themeMode: ThemeMode): EmptyResult<DataError.Local> =
         safeLocalCall {

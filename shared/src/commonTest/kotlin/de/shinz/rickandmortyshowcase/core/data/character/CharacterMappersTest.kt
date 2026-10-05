@@ -115,4 +115,24 @@ class CharacterMappersTest {
             created = "2017-11-04T18:50:21.651Z",
         )
     }
+
+    /**
+     * The evidence for *not* declaring `kotlinx-datetime`.
+     *
+     * The dependency table turns on `kotlin.time.Instant.parse` handling the
+     * API's ISO-8601 `created` field on both platforms. This used to live in
+     * `ToolchainCommonTest`, whose own KDoc asked to be deleted once real tests
+     * covered the source set; it is kept here because it is the standing proof
+     * behind a recorded dependency decision, not a toolchain smoke test.
+     *
+     * An absolute value, not a delta between two parsed instants: a delta still
+     * passes if the fractional second is dropped, or if both are mis-parsed the
+     * same way. This pins date, time and milliseconds in one assertion.
+     */
+    @Test
+    fun theStdlibParsesTheApiTimestampFormat() {
+        val created = Instant.parse("2017-11-04T18:48:46.250Z")
+
+        assertThat(created.toEpochMilliseconds()).isEqualTo(1_509_821_326_250L)
+    }
 }

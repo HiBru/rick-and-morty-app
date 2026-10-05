@@ -20,9 +20,13 @@ import androidx.compose.ui.unit.dp
  * silently miss the other. Three callers now — both lists and the settings
  * screen, which is not a list but wants the same arithmetic.
  *
- * Not `@Composable`, so [direction] is a parameter and this is unit-testable.
+ * Not `@Composable`, so [direction] is a parameter and this is unit-testable —
+ * see `ContentPaddingTest`, which is where the RTL round trip is pinned.
+ *
+ * `internal`: a public `commonMain` declaration is exported into the `Shared`
+ * Obj-C header, and this is app geometry rather than API.
  */
-fun PaddingValues.plus(
+internal fun PaddingValues.plus(
     direction: LayoutDirection,
     horizontal: Dp = 0.dp,
     vertical: Dp = 0.dp,

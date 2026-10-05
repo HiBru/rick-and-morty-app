@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Screen-by-screen behaviour lives in [docs/SPEC.md](docs/SPEC.md) — read it before implementing a feature.**
 **Task order, dependency rationale and locked decisions live in [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) — read it before starting any task.**
 
-The app is still being built out: the data layer and DI are wired, and `App()` renders a themed placeholder until the navigation shell lands. Most feature work means creating new structure rather than editing existing code. **The plan's checklist is the current state of play** — the first unticked box is what's next.
+**The app is complete.** All four screens are built and all twenty-three tasks in the plan are ticked; its end-to-end acceptance table records what was verified on device and how. Work from here is change rather than construction, so the conventions below now have a worked example for every one of them — prefer reading the nearest existing slice (`features/characterlist/` is the fullest) over re-deriving a pattern from this file.
 
 ## Commands
 
@@ -25,7 +25,6 @@ The app is still being built out: the data layer and DI are wired, and `App()` r
 ./gradlew :shared:testAndroidHostTest                        # JVM/host tests (commonTest + androidHostTest)
 ./gradlew :shared:iosSimulatorArm64Test                      # iOS tests (commonTest + iosTest)
 ./gradlew :shared:testAndroidHostTest --tests "de.shinz.rickandmortyshowcase.ToolchainCommonTest"
-./gradlew :shared:connectedAndroidDeviceTest                 # instrumented; no device tests exist yet
 
 # Lint / verification
 ./gradlew :androidApp:lint        # or lintFix to auto-apply safe suggestions
@@ -68,7 +67,7 @@ Three Gradle projects, but only two are in `settings.gradle.kts` — `iosApp` is
 
 **Put UI in `shared/commonMain`, not in `androidApp`.** Platform hosts exist only to bootstrap `App()`; adding screens to `androidApp` breaks the iOS app silently.
 
-All feature code stays in `commonMain` and KMP-compatible. `androidMain` / `iosMain` hold `expect`/`actual` halves only — see `Platform.kt` with `Platform.android.kt` / `Platform.ios.kt` as the pattern.
+All feature code stays in `commonMain` and KMP-compatible. `androidMain` / `iosMain` hold `expect`/`actual` halves only. There are six, and they are the pattern to copy: `SystemBarAppearance`, `PlatformDateTimeFormatter`, `NetworkErrorClassifier`, and the three DI seams `platformDatabaseModule` / `platformDataStoreModule` / `httpClientEngine`. *(The scaffold's `Platform.kt` trio used to be cited here; it had no callers and was deleted in Task 22.)*
 
 ### Module style: flat
 
@@ -87,8 +86,9 @@ core/
     format/            AppDateTimeManager + expect PlatformDateTimeFormatter
     ui/                UiText, ObserveAsEvents, toUiText() mappers
 di/
-    AppModule.kt       appModule (grouped by feature) + coreDataModule,
-                       coreDatabaseModule, coreDataStoreModule
+    AppModule.kt       appModule, grouped by feature. The four core modules are
+                       their own files: CoreDataModule, DatabaseModule,
+                       DataStoreModule, CoreUiModule — initKoin loads all five
 features/
     characterlist/     domain/usecase + presentation
     characterdetail/
@@ -228,7 +228,7 @@ There is a third variant, `Joined(parts, separator)`, which drops blank parts an
 
 ### Koin
 
-`appModule` in `di/` registers everything, **grouped by feature with a comment per group** — a flat list wiring four features is unreadable. `coreDataModule` and `coreDatabaseModule` cover core. Assembly lives in a shared `initKoin()` in `di/` that both hosts call — iOS has no `Application` class, so `startKoin { }` cannot live in the Android app module.
+`appModule` in `di/` registers everything, **grouped by feature with a comment per group** — a flat list wiring four features is unreadable. Core is four more: `coreDataModule`, `coreDatabaseModule`, `coreDataStoreModule` and `coreUiModule` (the Coil image loader). Assembly lives in a shared `initKoin()` in `di/` that both hosts call — iOS has no `Application` class, so `startKoin { }` cannot live in the Android app module.
 
 Prefer the constructor-reference overloads `singleOf` / `viewModelOf` / `factoryOf`; fall back to `single { }` / `viewModel { }` / `factory { }` only when constructor injection is not enough (a factory method, a qualified dependency, post-construction setup).
 

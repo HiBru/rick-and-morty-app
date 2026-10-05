@@ -8,14 +8,12 @@ import de.shinz.rickandmortyshowcase.core.domain.Result
 import de.shinz.rickandmortyshowcase.core.domain.asEmptyResult
 import de.shinz.rickandmortyshowcase.core.domain.datasource.FavoriteCharacterLocalDataSource
 import de.shinz.rickandmortyshowcase.core.domain.model.Character
+import de.shinz.rickandmortyshowcase.core.data.degradeTo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retry
 import kotlin.time.Clock
 
 /**
@@ -51,23 +49,23 @@ internal class RoomFavoriteCharacterLocalDataSource(
     override fun observeFavorites(): Flow<List<Character>> = dao.observeAll()
         .map { entities -> entities.map { it.toCharacter() } }
         .flowOn(Dispatchers.IO)
-        .retry(TRANSIENT_RETRIES)
-        .catch { emit(emptyList()) }
+        .degradeTo(fallback = emptyList(), retries = TRANSIENT_RETRIES)
 
     /**
-     * `distinctUntilChanged` is also required rather than optional. Room
-     * invalidates per *table*, so every write to `favorite_characters` re-runs
-     * even this id-only query — and without the filter the whole character list
-     * would recompose each time any unrelated favourite changed.
+     * `distinctUntilChanged` is required rather than optional, and it comes from
+     * [degradeTo]. Room invalidates per *table*, so every write to
+     * `favorite_characters` re-runs even this id-only query — without the filter
+     * the whole character list would recompose each time any unrelated
+     * favourite changed.
      *
-     * It sits after `catch` so that a failure following an already-empty
-     * emission does not emit `emptySet()` twice.
+     * **This is the flow whose permanent degradation would be a behaviour
+     * change rather than an empty screen**: the list's heart branches on it, so
+     * a terminated leg makes removal from Home unreachable. `degradeTo` is why
+     * it recovers.
      */
     override fun observeFavoriteIds(): Flow<Set<Int>> = dao.observeIds()
         .map { it.toSet() }
-        .retry(TRANSIENT_RETRIES)
-        .catch { emit(emptySet()) }
-        .distinctUntilChanged()
+        .degradeTo(fallback = emptySet(), retries = TRANSIENT_RETRIES)
 
     override suspend fun getFavorite(id: Int): Result<Character?, DataError.Local> =
         safeLocalCall { dao.getById(id)?.toCharacter() }

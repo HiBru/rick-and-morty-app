@@ -1,6 +1,4 @@
 <resources>
-    <string name="app_name">Rick and Morty</string>
-
     <!-- Actions. Static labels, so they live here rather than in a UiText. -->
     <string name="action_retry">Retry</string>
     <string name="action_cancel">Cancel</string>

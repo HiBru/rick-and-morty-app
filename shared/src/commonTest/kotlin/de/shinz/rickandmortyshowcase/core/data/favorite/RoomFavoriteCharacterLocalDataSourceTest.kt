@@ -54,7 +54,10 @@ class RoomFavoriteCharacterLocalDataSourceTest {
 
         dataSource(dao).observeFavorites().test {
             assertThat(awaitItem()).isEqualTo(emptyList())
-            awaitComplete()
+            // Degraded, *not* finished: `catch` used to complete the flow here,
+            // which under `stateIn(Eagerly)` meant the screen never recovered.
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -67,7 +70,10 @@ class RoomFavoriteCharacterLocalDataSourceTest {
 
         dataSource(dao).observeFavorites().test {
             assertThat(awaitItem()).isEqualTo(emptyList())
-            awaitComplete()
+            // Degraded, *not* finished: `catch` used to complete the flow here,
+            // which under `stateIn(Eagerly)` meant the screen never recovered.
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
         }
     }
 
@@ -102,7 +108,8 @@ class RoomFavoriteCharacterLocalDataSourceTest {
 
         dataSource(dao).observeFavoriteIds().test {
             assertThat(awaitItem()).isEqualTo(emptySet())
-            awaitComplete()
+            expectNoEvents()
+            cancelAndIgnoreRemainingEvents()
         }
     }
 

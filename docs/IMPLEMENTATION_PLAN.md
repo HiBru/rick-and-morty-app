@@ -38,7 +38,7 @@ Tick the checkbox **in the same commit as the task's code**. That way `git log` 
 - [x] **19.** Detail: screen + previews — *`android-compose-ui`*. Wired with `koinViewModel { parametersOf(characterId) }`; local-first proven on device (airplane mode + a favourited character renders fully, a non-favourited one errors with Retry). Introduced the robot pattern on both screens
 - [x] **20.** Favorites: complete slice — *`android-presentation-mvi`, `android-compose-ui`, `android-testing`*. Reuses `CharacterListItem` and the same detail destination; empty state, confirm-on-remove, and no network path at all. Verified end to end on device: favourite two on Home, both appear, remove both, the empty state returns
 - [x] **21.** Settings: complete slice — *`android-presentation-mvi`, `android-testing`*. Also discharges Task 10's `SystemBarAppearance` mismatch check with pixel evidence, and retires `PlaceholderScreen`, which lost its last caller here
-- [ ] **22.** Polish & end-to-end acceptance pass
+- [x] **22.** Polish & end-to-end acceptance pass — all ten criteria verified on the final build; see the table at the end of this file. Landscape, a clean full-suite run and a SPEC drift check were added to it
 
 **Task 10 wires `App()` before `AppNavHost` exists (Task 12).** Task 10 therefore wraps a temporary placeholder composable in `AppTheme`; Task 12 replaces it with the real `AppNavHost`.
 
@@ -413,15 +413,75 @@ Task 10 is the first task that renders anything, so it includes a one-off launch
 
 `adb` is not on `PATH`. The emulator AVD is `Pixel_10_Pro_XL`; Xcode is 26.4 and the scheme is `iosApp`.
 
-### End-to-end acceptance (Task 22) — on both platforms
+### End-to-end acceptance — run in Task 22, on the final build
 
-1. Home loads 20 characters; scrolling appends further pages; paging stops at the last page.
-2. Airplane mode on the first load shows the error state; retry recovers.
-3. Favoriting on Home appears immediately in Favorites and on the detail screen.
-4. Removing a favorite — from Home, from Favorites, and from Detail — always asks first; cancelling changes nothing.
-5. The Favorites empty state appears when the last favorite is removed.
-6. Detail opened from Favorites with the network off still renders fully (local-first).
-7. Detail opened from Home for a non-favorite loads from the API.
-8. Theme Dark/Light applies immediately and survives an app restart; System follows the device.
-9. Tab switches preserve each tab's scroll position.
-10. All copy is English; no hardcoded `dp`, `sp`, color or `FontWeight` survives review.
+All ten pass. Android was driven through each one; iOS renders identically and
+was verified by launch and screenshot, because **the simulator has no tap
+tooling on this machine** — `osascript` lacks Accessibility permission, which is
+the user's to grant, so iOS interaction is covered by the Compose UI tests
+(which run only there) rather than by hand.
+
+| # | Criterion | How it was shown |
+|---|---|---|
+| 1 | Home loads 20, scrolling appends, paging stops at the last page | Scrolled from "Rick Sanchez" to "Blamph" — several pages in. **Stopping at the last page is test-covered, not device-covered**: reaching page 42 by hand is ~800 scrolls. `GetCharacterPageUseCaseTest` pins the `404` translation and `CharacterListViewModelTest` pins `hasMore == false` by call count — and, added in this pass, the *composition* of the two, which nothing covered: a `404` on page 2 ends paging without surfacing an error |
+| 2 | Airplane mode on first load shows the error; retry recovers | Cold start offline → "No internet connection…" with Retry; network restored → Retry → page 1 |
+| 3 | Favouriting on Home shows in Favorites and on Detail | Favourited "Blamph" on Home; its detail already read "Remove Blamph from favorites", and Favorites listed it — no refresh anywhere |
+| 4 | Removal from Home, Favorites and Detail always asks; cancelling changes nothing | All three dialogs named the character; Cancel left the favourite in place each time. Adding stayed immediate with no dialog |
+| 5 | The empty state returns when the last favourite goes | Task 20, re-seen on the clean install here |
+| 6 | Detail from Favorites with the network off renders fully | Airplane mode → opened from Favorites → full record from the local row |
+| 7 | Detail from Home for a non-favourite loads from the API | Task 19 |
+| 8 | Theme applies immediately and survives a restart; System follows the device | Task 21, with pixel evidence for the system-bar mismatch |
+| 9 | Tab switches preserve scroll position | Home scrolled to "Blamph…", via Favorites and Settings and back — same position. **And the harder case the first pass missed**: Home scrolled deep → open a detail → back, which tears the whole nested host out of composition. Same position again ("Armagheadon…"), so the `SaveableStateProvider` registry and each tab's `LazyListState` survive it |
+| 10 | English copy; no hardcoded `dp`/`sp`/colour/`FontWeight` | All 36 strings listed and checked; greps over `commonMain` find none outside the token files, the only hit being `0.dp` as the identity default of `PaddingValues.plus` |
+
+**Also checked in the polish pass, beyond the ten:**
+
+- **Landscape**, which no earlier task had actually looked at — the Task 19 inset fix was reasoned, not seen. Home and Detail both clear the edges; the detail hero still bleeds under the status bar by design. A favourite survived the rotation, so the config change is clean too.
+- **A clean build from `clean`**, 0 failures, 0 skipped. The suite is **241 distinct tests**: 177 run on the iOS simulator, 195 on the JVM host, and the 131 in `commonTest` run on both — so adding the two task totals double-counts and is not a suite size. `iosArm64Test` is executed by no command here — "both platforms" means the JVM host and the iOS *simulator*.
+- **SPEC drift**: every statement in `docs/SPEC.md` re-read against the implementation. None found.
+
+### Removed in Task 22
+
+Dead weight an acceptance pass is the right moment to find:
+
+- `composeResources/drawable/compose-multiplatform.xml` — the project template's logo, never referenced.
+- `composeResources/values/strings.xml`'s `app_name` — also never referenced. The Android launcher label comes from `androidApp/src/main/res/values/strings.xml`, and iOS from `PRODUCT_NAME` in `Config.xcconfig`; the Compose Resources copy was a parallel definition nothing read.
+- `CLAUDE.md`'s opening paragraph, which still said the app "renders a themed placeholder until the navigation shell lands" and pointed at "the first unticked box". It is the first thing every session reads, so leaving it describing a scaffold would have been the most misleading line in the repo.
+
+**Noticed, not changed — a product decision rather than a defect:** the launcher label is the scaffold's `RickAndMortyShowcase` on both platforms, with no spaces. The deleted `app_name` suggested someone once intended "Rick and Morty". `SPEC.md` never names the app, so renaming it is a call for whoever owns the product, not a tidy-up.
+
+### Fixed in Task 22
+
+**`catch` completes a flow, and that was a bug rather than a limitation.**
+`observeThemeMode`, `observeFavorites` and `observeFavoriteIds` all ended in
+`retry(2).catch { emit(fallback) }`. `catch` **completes** the flow, and
+`stateIn(Eagerly)` subscribes once for a ViewModel's whole life and never
+resubscribes — so one burst of read failures degraded that screen until the
+process died.
+
+*An earlier revision of this section left it alone and called the fix "a
+data-layer rewrite of three sources". That was wrong twice over, and the review
+said so.* The consequence is not cosmetic where the fallback also feeds a
+**decision**: `CharacterListViewModel.onFavoriteClick` branches add-versus-remove
+on the favourite ids, so a leg stuck at `emptySet()` shows every heart unfilled,
+makes **removal from Home unreachable** — which `SPEC.md` requires — and turns
+each tap into a re-upsert that re-stamps `addedAt` and silently reorders
+Favorites. And the claim that it could not be exercised "short of corrupting a
+store" was simply false: four tests already drove the production chains through
+throwing fakes.
+
+The fix is one operator, `core/data/degradeTo`: emit the fallback, then
+**collect the upstream again** after a pause, so the flow never ends.
+`retryWhen` rather than `retry`, because the latter rejects a count of zero and
+turns a boundary value into a crash. `distinctUntilChanged` lives inside it, so a
+persistent failure does not re-announce the same fallback every pass.
+`DegradingFlowTest` pins the half nothing covered before: **recovery**.
+
+### Settled in Task 22, not changed
+
+- **"Added to the API"** as the label for `created`, revisited as Task 18 asked. Kept: it is the only phrasing that cannot be read as "added to *your* favourites", and that ambiguity would be worse than the jargon.
+- **Four findings recorded rather than acted on**, each with its reason:
+  - **`status` is the one favourited field that does not round-trip verbatim.** `SPEC.md` says favouriting persists every API value; `FavoriteCharacterMappers` stores `CharacterStatus.name`, so an unrecognised future status would be saved as `UNKNOWN` and the API's own word lost. That follows from the Task 3 decision to make `status` the single enum, and reversing it would mean a column that no longer maps to the domain type. A literal exception to a cross-cutting rule, now written down.
+  - **"Works fully offline" covers the record, not the portrait.** Images come from the same host over the network; offline they resolve only from Coil's disk cache, whose size is Coil's platform default because the builder deliberately names neither cache. Fine for a favourite just viewed, not a guarantee.
+  - **`Result.onSuccess` has no production call site** — only `ResultTest`. The same standard that rejected `.dataOrNull()` would delete it; it stays because the four helpers are the error-handling skill's prescribed set and an incomplete `Result` is worse than an unused function. Noted so the inconsistency is deliberate rather than overlooked.
+  - **The Android launcher is still scaffold**: the stock green-robot adaptive icon, and `RickAndMortyShowcase` as the label on both platforms. `SPEC.md` never names the app, so renaming it and drawing an icon are product calls, not tidy-ups.

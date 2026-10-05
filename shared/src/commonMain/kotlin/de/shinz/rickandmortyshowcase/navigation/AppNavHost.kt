@@ -185,7 +185,7 @@ private fun NavDestination?.toTopLevel(): TopLevelDestination? = when {
  * stops re-tapping a tab from pushing a second copy. Popping to the graph's
  * start destination keeps the back stack from growing one entry per switch.
  */
-internal fun NavHostController.switchTab(destination: TopLevelDestination) {
+private fun NavHostController.switchTab(destination: TopLevelDestination) {
     navigate(destination.route) {
         popUpTo(graph.findStartDestination().id) { saveState = true }
         launchSingleTop = true

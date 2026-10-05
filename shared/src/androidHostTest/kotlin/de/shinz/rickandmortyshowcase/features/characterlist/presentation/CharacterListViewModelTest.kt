@@ -142,6 +142,34 @@ class CharacterListViewModelTest {
     }
 
     /**
+     * The two halves of "paging stops at the last page", joined.
+     *
+     * `hasMore == false` and the API's `404`-past-the-end were each pinned —
+     * one in `GetCharacterPageUseCaseTest`, one by call count here — but nothing
+     * drove a `404` through the ViewModel to show that the *composition* of use
+     * case and paging buffer actually halts. On device that case is ~800 scrolls
+     * away, so it is reachable nowhere else.
+     */
+    @Test
+    fun `a 404 past the last page ends paging instead of erroring`() = runTest {
+        remote.pages[1] = page(1, 2, hasMore = true)
+        remote.pageErrors[2] = DataError.Network.NOT_FOUND
+        val viewModel = viewModel()
+
+        viewModel.onAction(CharacterListUiAction.OnEndOfListReached)
+        val afterEnd = remote.fetchCharacterPageCallCount
+        repeat(3) { viewModel.onAction(CharacterListUiAction.OnEndOfListReached) }
+
+        val uiState = viewModel.uiState.value
+        // Not an error: the user scrolled off the end, which is not a failure.
+        assertThat(uiState.nextPageError).isNull()
+        assertThat(uiState.initialLoadError).isNull()
+        assertThat(uiState.characters.map(CharacterUi::id)).containsExactly(1, 2)
+        // And nothing is asked for again.
+        assertThat(remote.fetchCharacterPageCallCount).isEqualTo(afterEnd)
+    }
+
+    /**
      * The guard that is easiest to get wrong, and whose absence is invisible
      * until someone is offline: after a page fails the user is still parked at
      * the bottom of the list, so every further scroll frame would re-fire the

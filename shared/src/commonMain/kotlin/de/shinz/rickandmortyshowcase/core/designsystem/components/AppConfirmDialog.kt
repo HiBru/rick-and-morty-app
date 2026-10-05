@@ -111,8 +111,8 @@ internal fun AppConfirmDialogContent(
 private fun AppConfirmDialogContentPreview() {
     AppTheme {
         AppConfirmDialogContent(
-            title = "Remove favourite?",
-            text = "Rick Sanchez will no longer be available offline.",
+            title = "Remove favorite?",
+            text = "Rick Sanchez will no longer be saved for offline viewing.",
             confirmLabel = "Remove",
             onConfirm = {},
             onDismiss = {},
